@@ -23,8 +23,8 @@ function runNode(id, args) {
   };
 }
 
-async function architectureCheck() {
-  const path = join(repoRoot, 'assets', 'codex-bridge-chatgpt-architecture.png');
+async function architectureCheck(id, filename) {
+  const path = join(repoRoot, 'assets', filename);
   try {
     const image = await readFile(path);
     const signature = image.subarray(0, 8).toString('hex');
@@ -32,14 +32,34 @@ async function architectureCheck() {
     const height = image.readUInt32BE(20);
     const ok = signature === '89504e470d0a1a0a' && width >= 1200 && height >= 700;
     return {
-      id: 'architecture_asset',
+      id,
       status: ok ? 'passed' : 'failed',
       exit_code: ok ? 0 : 1,
       detail: ok ? `PNG ${width}x${height}` : 'architecture PNG is missing or too small',
     };
   } catch (error) {
     return {
-      id: 'architecture_asset',
+      id,
+      status: 'failed',
+      exit_code: 1,
+      detail: error.message,
+    };
+  }
+}
+
+async function readmeCheck(id, filename, requiredFragments) {
+  try {
+    const content = await readFile(join(repoRoot, filename), 'utf8');
+    const missing = requiredFragments.filter((fragment) => !content.includes(fragment));
+    return {
+      id,
+      status: missing.length === 0 ? 'passed' : 'failed',
+      exit_code: missing.length === 0 ? 0 : 1,
+      detail: missing.length === 0 ? `${filename} bilingual contract present` : `missing: ${missing.join(', ')}`,
+    };
+  } catch (error) {
+    return {
+      id,
       status: 'failed',
       exit_code: 1,
       detail: error.message,
@@ -59,7 +79,24 @@ const checks = [
   ]),
   runNode('receipt', [validator, 'receipt', 'tests/artifacts/e2e-receipt-1k-sol.json']),
   runNode('complete', [validator, 'complete', 'tests/artifacts/e2e-receipt-1k-sol.json']),
-  await architectureCheck(),
+  await architectureCheck('architecture_asset_en', 'codex-bridge-chatgpt-architecture.en.png'),
+  await architectureCheck('architecture_asset_zh', 'codex-bridge-chatgpt-architecture.png'),
+  await readmeCheck('readme_en', 'README.md', [
+    '[简体中文](README.zh-CN.md)',
+    '## Workflow',
+    '## How it works',
+    '## Installation',
+    '## Quick start',
+    'assets/codex-bridge-chatgpt-architecture.en.png',
+  ]),
+  await readmeCheck('readme_zh', 'README.zh-CN.md', [
+    '[English](README.md)',
+    '## 工作流',
+    '## 工作原理',
+    '## 安装',
+    '## 快速上手',
+    'assets/codex-bridge-chatgpt-architecture.png',
+  ]),
 ];
 
 const receipt = {

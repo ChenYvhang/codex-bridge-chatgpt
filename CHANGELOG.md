@@ -7,3 +7,4 @@
 - Added bounded Context Packet and structured Reasoning Result contracts.
 - Added local adoption gate, privacy checks, artifact hashes, and complete run receipts.
 - Added Mac and Windows CI, installation guides, security policy, and architecture documentation.
+- Added English-first and Simplified Chinese README documentation with localized architecture diagrams.

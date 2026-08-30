@@ -1,84 +1,211 @@
-# Codex 桥接 ChatGPT
+# Codex Bridge to ChatGPT
 
-让 Codex 负责读取项目、修改和测试，让 ChatGPT 网页端负责高成本推理。整个过程通过一个可安装 Skill 串联，用户只需要一句话。
+**English** | [简体中文](README.zh-CN.md)
+
+[![CI](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml/badge.svg)](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml)
+[![Version](https://img.shields.io/badge/version-0.1.0-10a37f)](CHANGELOG.md)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
+[![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-43853d)](package.json)
+
+An open-source Codex Skill and Plugin-ready package that delegates difficult repository reasoning to ChatGPT Web while keeping evidence collection, file edits, tests, and the final decision inside Codex.
 
 ```text
-$codex-bridge-chatgpt 帮我诊断并修复这个复杂问题
+$codex-bridge-chatgpt Diagnose this complex bug, implement the fix, and verify it locally.
 ```
 
-![Codex 桥接 ChatGPT 架构](assets/codex-bridge-chatgpt-architecture.png)
+No separate setup prompt. No OpenAI API key. No background service. One task enters a resumable, verified handoff workflow.
 
-可维护图源见 [docs/architecture/codex-bridge-chatgpt-v1.architecture.json](docs/architecture/codex-bridge-chatgpt-v1.architecture.json)。
+![Codex Bridge to ChatGPT architecture](assets/codex-bridge-chatgpt-architecture.en.png)
 
-## 它解决什么问题
+Maintained diagram source: [docs/architecture/codex-bridge-chatgpt-v1.en.architecture.json](docs/architecture/codex-bridge-chatgpt-v1.en.architecture.json).
 
-复杂架构、疑难 Bug 和多方案权衡需要更强推理，但仓库搜索、文件修改和测试更适合留在 Codex 本地执行。本项目把两者分开：
+## Why this project exists
 
-- Codex 收集最小证据，压缩为 1–3K approximate-token Packet。
-- ChatGPT 网页端返回结构化建议，不获得仓库访问权。
-- Codex 本地复核每条建议，重新构造修改并运行测试。
-- Packet、Result、浏览器证据和运行状态写入可验证回执。
+Complex debugging, architecture decisions, and multi-option trade-offs often benefit from a stronger reasoning pass. Repository inspection and execution, however, should remain close to the working tree where facts can be checked and changes can be tested.
 
-## V1 支持范围
+Codex Bridge to ChatGPT separates those responsibilities:
 
-| 环境 | 支持情况 |
+| Responsibility | Owner |
 |---|---|
-| macOS ChatGPT 桌面 App 中的 Codex | 支持 |
-| Windows ChatGPT 桌面 App 中的 Codex | 支持 |
-| Codex CLI | 不支持内置 Browser 桥接 |
-| Codex IDE 扩展 | 不支持内置 Browser 桥接 |
-| Linux | V1 不支持 |
+| Read repository rules, code, tests, and working-tree state | Codex |
+| Minimize and sanitize the evidence | Codex |
+| Perform the expensive reasoning pass | ChatGPT Web |
+| Decide which recommendations are trustworthy | Codex |
+| Edit files and run commands | Codex |
+| Validate tests and declare completion | Codex |
 
-V1 不绕过账号套餐、工作区策略、模型权限、登录验证或网站安全机制。
+ChatGPT proposes. Codex verifies and executes.
 
-## 安装
+## What it does
 
-在 Mac 或 Windows ChatGPT 桌面 App 的 Codex 中发送：
+- Starts from one natural-language task.
+- Runs Automatic Doctor before the first handoff.
+- Checks the supported desktop surface, in-app Browser, ChatGPT login, and requested model.
+- Compresses decisive repository evidence into a bounded 1–3K approximate-token Context Packet.
+- Removes likely credentials and unrelated repository context before transmission.
+- Uses the Codex in-app Browser instead of an ordinary browser profile.
+- Requires ChatGPT to return a structured Reasoning Result.
+- Treats all web output as untrusted data.
+- Records every recommendation as `accepted`, `rejected`, or `deferred`.
+- Reconstructs edits and test commands from current local repository state.
+- Binds Packet, Result, browser evidence, and run status with SHA-256 receipts.
+- Declares completion only after the deterministic `complete` gate passes.
+
+## Workflow
+
+1. **Invoke** — the user names `$codex-bridge-chatgpt` in a real repository task.
+2. **Preflight** — Automatic Doctor validates the installed package and runtime.
+3. **Browser check** — Codex checks the desktop surface, in-app Browser, ChatGPT login, and requested model.
+4. **Local evidence** — Codex reads project instructions, status, relevant code, and tests.
+5. **Context Packet** — Codex produces a bounded, sanitized handoff contract.
+6. **Web reasoning** — ChatGPT returns a structured proposal without repository access.
+7. **Local adoption gate** — Codex independently verifies each proposed change.
+8. **Edit and test** — Codex reconstructs the implementation and runs local validation.
+9. **Run receipt** — artifact hashes, model observations, privacy checks, and tests are recorded.
+10. **Complete gate** — only a fully validated run can be reported as complete.
+
+## How it works
+
+### Context Packet
+
+The outbound Packet contains only the information needed to change the decision:
+
+- objective;
+- acceptance criteria;
+- relevant repository state;
+- decisive evidence;
+- constraints;
+- explicit questions for the reasoner.
+
+The validator rejects malformed markers, missing sections, duplicate fields, oversized Packets, and common credential patterns.
+
+### Reasoning Result
+
+ChatGPT must separate evidence from inference and return a fixed result contract containing a verdict, assumptions, evidence used, proposed changes, tests, risks, and unknowns. A matching `packet_id` binds the answer to the request.
+
+### Local adoption gate
+
+A valid Result is not permission to execute it. Codex reopens the relevant local files and symbols, verifies every accepted recommendation, and reconstructs commands or patches itself. Commands, paths, patches, and test strings from the webpage are never passed directly to tools.
+
+### Run receipt
+
+The final receipt records:
+
+- Packet, Result, and browser-evidence SHA-256 hashes;
+- observed Codex and ChatGPT model UI evidence;
+- privacy-review fields;
+- accepted, rejected, and deferred recommendations;
+- local modification and test status.
+
+Hashes bind local artifacts. They do not cryptographically attest the remote backend model.
+
+## Requirements and support
+
+- Node.js 18 or newer.
+- A Mac or Windows ChatGPT desktop App environment with Codex.
+- The Codex in-app Browser capability and `browser:control-in-app-browser` Skill.
+- A ChatGPT Web session that can visibly access the requested model.
+
+| Surface | V1 status |
+|---|---|
+| macOS ChatGPT desktop App + Codex | Supported target; locally exercised |
+| Windows ChatGPT desktop App + Codex | Supported target; package gates run in Windows CI |
+| Codex CLI | No in-app Browser bridge |
+| Codex IDE extension | No in-app Browser bridge |
+| Linux | Not supported by the V1 desktop workflow |
+
+The deterministic package is tested on both macOS and Windows. End-to-end web transport still depends on the Browser capabilities exposed by the user's desktop App version.
+
+## Installation
+
+### Recommended: Skill Installer
+
+If your Codex installation includes `$skill-installer`, send this in Codex:
 
 ```text
 $skill-installer Install codex-bridge-chatgpt from https://github.com/anightmonarch/codex-bridge-chatgpt/tree/main/skills/codex-bridge-chatgpt
 ```
 
-安装后新开一个任务，直接调用：
+Open a new Codex task after installation so the Skill list is reloaded.
 
-```text
-$codex-bridge-chatgpt 审查这个方案并完成本地修改和测试
+### Manual installation on macOS
+
+```bash
+git clone --depth 1 https://github.com/anightmonarch/codex-bridge-chatgpt.git
+mkdir -p "$HOME/.codex/skills"
+cp -R codex-bridge-chatgpt/skills/codex-bridge-chatgpt "$HOME/.codex/skills/"
 ```
 
-仓库同时包含 Plugin manifest。V1 可以从 GitHub 直接安装 Skill；Plugin 目录分发是后续发布通道，工作流仍使用同一份 `SKILL.md`。
+### Manual installation on Windows PowerShell
 
-完整安装、升级和卸载说明见 [docs/installation.md](docs/installation.md)。
+```powershell
+git clone --depth 1 https://github.com/anightmonarch/codex-bridge-chatgpt.git
+New-Item -ItemType Directory -Force "$HOME\.codex\skills" | Out-Null
+Copy-Item -Recurse "codex-bridge-chatgpt\skills\codex-bridge-chatgpt" "$HOME\.codex\skills\"
+```
 
-## 自动 Doctor
+If the destination already exists, back it up and compare versions instead of overwriting it blindly.
 
-每次调用都会先运行自动预检，不需要单独执行 `setup`：
+The repository also includes a validated [Codex Plugin manifest](.codex-plugin/plugin.json). The Skill directory is the canonical workflow; the Plugin is its distribution wrapper.
 
-1. 检查 Skill 文件和 Node.js 运行时。
-2. 检查是否运行在 Mac/Windows ChatGPT 桌面 App。
-3. 检查 Codex 内置 Browser 是否可用。
-4. 检查内置 Browser 中的 ChatGPT 登录状态。
-5. 检查用户要求的模型是否真实可见。
-6. 通过后继续原任务。
+## Quick start
 
-需要登录、模型选择或站点授权时，Skill 会保留原任务并等待用户接管页面。用户不需要重新描述问题，也不要把密码、验证码或 Cookie 发给 Codex。
+Open a repository in Codex and send one task:
 
-首次使用流程见 [docs/first-run.md](docs/first-run.md)，状态排查见 [docs/troubleshooting.md](docs/troubleshooting.md)。
+```text
+$codex-bridge-chatgpt Find the root cause of this intermittent failure, implement the smallest safe fix, and run the relevant tests.
+```
 
-## 隐私边界
+Other useful prompts:
 
-使用此 Skill 会把经过最小化和脱敏的 Context Packet 发送到 `chatgpt.com`。不会主动发送：
+```text
+$codex-bridge-chatgpt Review this architecture decision and implement the locally verified option.
 
-- 密码、Token、私钥、Cookie、验证码。
-- `.env` 或原始环境文件。
-- 与当前决策无关的源码和文档。
-- 完整未提交 diff。
-- 个人数据或客户数据。
+$codex-bridge-chatgpt Diagnose this performance regression from first principles and verify the fix.
 
-正则扫描不能识别所有业务敏感信息，因此发送前还要求语义隐私审查。详见 [docs/privacy.md](docs/privacy.md)。
+$codex-bridge-chatgpt Compare the plausible designs, choose one with evidence, then modify and test the repository.
+```
 
-## 本地验证
+Use the bridge for unclear root causes, multiple plausible designs, or high-cost technical decisions. Keep mechanical edits, simple lookups, and already-decided plans local.
 
-项目无 npm 依赖。Node.js 18 或更高版本即可运行：
+## First-run Doctor
+
+Users do not run a separate setup command. The Skill automatically checks the installation and then returns exactly one volatile browser status:
+
+| Status | Meaning | Recovery |
+|---|---|---|
+| `READY` | Package, Browser, login, and requested model are available | Continue automatically |
+| `MISSING_RUNTIME` | Node.js 18+ is unavailable | Install Node.js 18+ and retry |
+| `INVALID_INSTALLATION` | Required Skill files are missing or mismatched | Reinstall the Skill directory |
+| `NEEDS_DESKTOP_APP` | The current Codex surface does not support this bridge | Use the Mac/Windows ChatGPT desktop App |
+| `NEEDS_BROWSER` | The in-app Browser capability is unavailable | Update or enable the required Browser capability |
+| `NEEDS_CHATGPT_LOGIN` | ChatGPT is visibly logged out in the in-app Browser | Take over the page, log in, then reply that login is complete |
+| `NEEDS_MODEL_SELECTION` | The requested model is not visible or selected | Select it or explicitly approve a different model |
+| `NEEDS_SITE_PERMISSION` | Access to `chatgpt.com` needs user permission | Approve access in the desktop App |
+
+The original repository task is preserved across human takeover. Passwords, verification codes, cookies, and recovery codes must never be sent to Codex.
+
+## Privacy and security
+
+The Skill sends a minimized Context Packet to `https://chatgpt.com/` through the in-app Browser. It does not use the OpenAI API, require an API key, run a hosted service, or collect telemetry.
+
+It is designed not to send:
+
+- passwords, tokens, API keys, private keys, cookies, or verification codes;
+- `.env` files or raw credential stores;
+- complete private repositories or complete uncommitted diffs;
+- unrelated source files;
+- personal, customer, financial, medical, or organizational data without explicit action-time approval.
+
+Regex scanning cannot understand every business secret, so the workflow also requires a semantic privacy review before transmission.
+
+This project does not bypass ChatGPT plans, model entitlements, login, workspace policy, rate limits, or site security. It cannot turn a Plus account into Pro. Any token or cost savings depend on the user's actual Codex and ChatGPT plans and workload; they are not guaranteed by the Skill.
+
+See [docs/privacy.md](docs/privacy.md) and [SECURITY.md](SECURITY.md).
+
+## Local verification
+
+The project has no npm dependencies:
 
 ```bash
 npm test
@@ -86,21 +213,38 @@ npm run doctor
 npm run validate
 ```
 
-CI 在 macOS 和 Windows 上执行同一组命令。
+The verification suite covers Doctor states, portable copied installation, Packet/Result validation, secret rejection, hash binding, model evidence, privacy fields, receipt completion, and the architecture asset.
 
-## 安全原则
+## Repository layout
 
-- ChatGPT 只提供建议，Codex 才能修改仓库。
-- 网页输出永远按不可信数据处理。
-- Result 中的命令、补丁和路径禁止直接执行。
-- UI 显示的模型是可审计证据，不是后端模型的密码学证明。
-- 删除、数据库变更、部署、push 和公开发布继续遵守用户原有确认边界。
+```text
+.
+├── .codex-plugin/plugin.json         # Plugin distribution manifest
+├── assets/                           # English and Chinese architecture images
+├── docs/                             # Installation, first-run, privacy, and design docs
+├── scripts/verify.mjs                # Portable package verification
+├── skills/codex-bridge-chatgpt/
+│   ├── SKILL.md                      # Canonical workflow entrypoint
+│   ├── agents/openai.yaml            # Codex interface metadata
+│   ├── references/                   # Conditional workflow contracts
+│   └── scripts/                      # Doctor and handoff validator
+└── tests/                            # Unit, contract, portability, and E2E artifacts
+```
 
-安全问题请查看 [SECURITY.md](SECURITY.md)。
+## Limitations
 
-## 开发
+- V1 requires the supported ChatGPT desktop App workflow; it is not a generic CLI bridge.
+- Login, CAPTCHA, two-factor authentication, permissions, and model selection remain human actions.
+- Visible model UI is auditable evidence, not cryptographic remote-model attestation.
+- ChatGPT page changes can break DOM extraction; the Skill fails closed instead of accepting partial output.
+- Private repository evidence may require explicit confirmation before transmission.
+- A valid Result can still be wrong; local verification remains mandatory.
 
-贡献指南见 [CONTRIBUTING.md](CONTRIBUTING.md)，版本记录见 [CHANGELOG.md](CHANGELOG.md)。
+## Development and contributing
+
+Read [CONTRIBUTING.md](CONTRIBUTING.md) before changing workflow behavior. Preserve the central boundary: ChatGPT proposes; Codex verifies, edits, and tests locally.
+
+For model-family terminology, see the [official OpenAI model guidance](https://developers.openai.com/api/docs/guides/latest-model).
 
 ## License
 

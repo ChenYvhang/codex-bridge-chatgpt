@@ -1,0 +1,162 @@
+{
+  "schema_version": 1,
+  "diagram_type": "architecture",
+  "meta": {
+    "title": "Codex Bridge to ChatGPT: V1 Architecture",
+    "locale": "en",
+    "quality_profile": "showcase",
+    "viewBox": [1380, 670],
+    "views": [
+      {
+        "id": "one-sentence",
+        "label": "One-sentence start",
+        "focus": ["user", "plugin", "skill", "doctor"],
+        "note": "Name the Skill in a real task. Automatic Doctor checks the environment on first use."
+      },
+      {
+        "id": "reasoning-loop",
+        "label": "Reasoning loop",
+        "focus": ["codex", "contract", "browser", "chatgpt", "adoption", "edit_test"],
+        "note": "ChatGPT performs high-cost reasoning; Codex keeps local evidence, execution authority, and final judgment."
+      },
+      {
+        "id": "completion",
+        "label": "Verifiable completion",
+        "focus": ["edit_test", "receipt"],
+        "note": "The run is complete only after local tests, hash binding, and the complete gate all pass."
+      }
+    ]
+  },
+  "components": [
+    {
+      "id": "user",
+      "type": "external",
+      "label": "User",
+      "sublabel": "One-sentence call",
+      "pos": [25, 285],
+      "size": [125, 68]
+    },
+    {
+      "id": "plugin",
+      "type": "cloud",
+      "label": "Codex Plugin",
+      "sublabel": "Install & discovery shell",
+      "tag": "Mac / Windows",
+      "pos": [190, 285],
+      "size": [150, 68]
+    },
+    {
+      "id": "skill",
+      "type": "backend",
+      "label": "Bridge Skill",
+      "sublabel": "Canonical workflow",
+      "tag": "codex-bridge-chatgpt",
+      "pos": [375, 285],
+      "size": [160, 68]
+    },
+    {
+      "id": "doctor",
+      "type": "security",
+      "label": "Automatic Doctor",
+      "sublabel": "Runtime, Browser, account",
+      "tag": "fail closed",
+      "pos": [570, 285],
+      "size": [165, 68]
+    },
+    {
+      "id": "codex",
+      "type": "backend",
+      "label": "Codex / Luna",
+      "sublabel": "Evidence, packets, routing",
+      "pos": [770, 285],
+      "size": [155, 68]
+    },
+    {
+      "id": "project",
+      "type": "database",
+      "label": "Local Repository",
+      "sublabel": "Rules, code, tests",
+      "pos": [770, 80],
+      "size": [155, 68]
+    },
+    {
+      "id": "contract",
+      "type": "security",
+      "label": "Contract Validator",
+      "sublabel": "Packet / Result / SHA-256",
+      "pos": [955, 285],
+      "size": [170, 68]
+    },
+    {
+      "id": "browser",
+      "type": "frontend",
+      "label": "Codex In-app Browser",
+      "sublabel": "Reuses desktop login session",
+      "pos": [1160, 285],
+      "size": [175, 68]
+    },
+    {
+      "id": "chatgpt",
+      "type": "external",
+      "label": "ChatGPT Web",
+      "sublabel": "GPT-5.6 Sol deep reasoning",
+      "pos": [1160, 475],
+      "size": [175, 68]
+    },
+    {
+      "id": "adoption",
+      "type": "security",
+      "label": "Local Adoption Gate",
+      "sublabel": "accepted / rejected / deferred",
+      "pos": [920, 475],
+      "size": [190, 68]
+    },
+    {
+      "id": "edit_test",
+      "type": "backend",
+      "label": "Local Edit & Test",
+      "sublabel": "Codex reconstructs and verifies",
+      "pos": [690, 475],
+      "size": [185, 68]
+    },
+    {
+      "id": "receipt",
+      "type": "database",
+      "label": "Run Receipt + Complete Gate",
+      "sublabel": "Evidence, hashes, models, test status",
+      "tag": "complete only",
+      "pos": [430, 475],
+      "size": [210, 68]
+    }
+  ],
+  "connections": [
+    {"id": "invoke", "from": "user", "to": "plugin", "label": "one-sentence call", "variant": "emphasis", "labelDy": -28},
+    {"id": "discover", "from": "plugin", "to": "skill", "label": "discover & load", "labelDy": -28},
+    {"id": "preflight", "from": "skill", "to": "doctor", "label": "automatic preflight", "variant": "security", "labelDy": -28},
+    {"id": "ready", "from": "doctor", "to": "codex", "label": "READY, then resume", "variant": "security", "labelDy": -28},
+    {"id": "read-project", "from": "project", "to": "codex", "label": "minimal evidence", "fromSide": "bottom", "toSide": "top", "labelDy": 24},
+    {"id": "packet", "from": "codex", "to": "contract", "label": "1–3K Packet", "variant": "emphasis", "labelDy": -28},
+    {"id": "transport", "from": "contract", "to": "browser", "label": "validate + sanitize", "variant": "security", "labelDy": -28},
+    {"id": "reason", "from": "browser", "to": "chatgpt", "label": "authenticated session", "fromSide": "bottom", "toSide": "top", "variant": "emphasis", "labelDy": 24},
+    {"id": "structured-result", "from": "chatgpt", "to": "adoption", "label": "structured Result", "variant": "dashed", "labelDy": -28},
+    {"id": "accept", "from": "adoption", "to": "edit_test", "label": "verified items only", "variant": "security", "labelDy": -28},
+    {"id": "evidence", "from": "edit_test", "to": "receipt", "label": "tests + hashes", "variant": "emphasis", "labelDy": -28}
+  ],
+  "cards": [
+    {
+      "dot": "cyan",
+      "title": "Distribution & use",
+      "items": ["Plugin handles installation and discovery; Skill owns orchestration", "After installation, the user needs one sentence—not setup commands"]
+    },
+    {
+      "dot": "rose",
+      "title": "First run",
+      "items": ["Doctor checks the desktop surface, Browser, login, and model", "Missing capabilities produce resumable states; there is no silent fallback"]
+    },
+    {
+      "dot": "emerald",
+      "title": "Authority & completion",
+      "items": ["ChatGPT proposes; it never receives repository execution authority", "Codex gathers evidence, edits, tests, and decides whether the run is complete"]
+    }
+  ]
+}

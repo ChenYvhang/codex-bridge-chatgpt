@@ -17,7 +17,18 @@ test('the portable verifier runs every deterministic package gate', () => {
   assert.equal(receipt.status, 'passed');
   assert.deepEqual(
     receipt.checks.map((check) => check.id),
-    ['doctor', 'packet', 'result', 'pair', 'receipt', 'complete', 'architecture_asset'],
+    [
+      'doctor',
+      'packet',
+      'result',
+      'pair',
+      'receipt',
+      'complete',
+      'architecture_asset_en',
+      'architecture_asset_zh',
+      'readme_en',
+      'readme_zh',
+    ],
   );
   assert.ok(receipt.checks.every((check) => check.status === 'passed'));
 });
