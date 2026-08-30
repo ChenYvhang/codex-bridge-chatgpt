@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "packet_id": "architecture-2026-08-30-1k",
+  "codex_model": {
+    "requested": "gpt-5.6-luna",
+    "observed": null,
+    "status": "unverified",
+    "evidence": "The active Codex model is not exposed by authoritative runtime evidence in this task."
+  },
+  "chatgpt_model": {
+    "requested": "GPT-5.6 Sol",
+    "observed": "ChatGPT",
+    "status": "unverified",
+    "evidence": "The Codex in-app browser showed a generic ChatGPT selector, Login controls, and the login-or-register dialog during this run."
+  },
+  "browser_transport": "verified",
+  "packet_validation": "passed",
+  "result_validation": "passed",
+  "pair_validation": "passed",
+  "local_revalidation": "passed",
+  "tests": "passed"
+}

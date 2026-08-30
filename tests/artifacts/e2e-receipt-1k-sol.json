@@ -1,0 +1,76 @@
+{
+  "schema_version": 2,
+  "packet_id": "architecture-2026-08-30-1k",
+  "artifacts": {
+    "packet": {
+      "path": "tests/artifacts/e2e-packet-1k.md",
+      "sha256": "82f1158a3fdfc0a29a922c6090da3d507323d49f053be79e36598cbab1c7be75",
+      "approximate_tokens": 1795
+    },
+    "result": {
+      "path": "tests/artifacts/e2e-result-1k-sol.md",
+      "sha256": "21379b08aa16cde7ea40bb8b12e9623ffbcfa908d397b9b1e92ac27b939ed58e"
+    },
+    "browser_evidence": {
+      "path": "tests/artifacts/e2e-browser-evidence-1k-sol.md",
+      "sha256": "0ecf0d83873b290dbd67ec902a28605301c341fe1fc456d0b26247b5baa3ec2d"
+    }
+  },
+  "codex_model": {
+    "requested": "gpt-5.6-luna",
+    "observed": "gpt-5.6-luna",
+    "status": "verified",
+    "evidence": "Current-turn session metadata exposed thread_settings.model as gpt-5.6-luna before Luna performed the final local audit."
+  },
+  "chatgpt_model": {
+    "requested": "GPT-5.6 Sol",
+    "observed": "GPT-5.6 Sol",
+    "status": "verified",
+    "evidence": "The authenticated ChatGPT Pro UI showed GPT-5.6 Sol selected before submission and after the completed result.",
+    "preflight_visible": true,
+    "postflight_visible": true
+  },
+  "privacy_review": {
+    "scope_minimized": true,
+    "credentials_scan_passed": true,
+    "semantic_privacy_reviewed": true,
+    "raw_diff_excluded": true,
+    "unrelated_files_excluded": true
+  },
+  "browser_transport": "verified",
+  "packet_validation": "passed",
+  "result_validation": "passed",
+  "pair_validation": "passed",
+  "local_revalidation": "passed",
+  "adoption": {
+    "status": "passed",
+    "accepted": [
+      "Mandatory local adoption gate before edits",
+      "Prompt-injection and model-identity boundaries",
+      "Strict duplicate marker, section, field, and Result secret validation",
+      "SHA-256 artifact binding",
+      "Preflight and postflight ChatGPT model UI evidence",
+      "Receipt v2 privacy and adoption records"
+    ],
+    "rejected": [
+      "Replacing existing lowercase status enums with uppercase aliases without a compatibility need",
+      "Requiring screenshots when a tool-generated DOM summary proves the same visible UI facts"
+    ],
+    "deferred": [
+      "Additional destructive-command fixtures beyond the current no-direct-execution adoption gate"
+    ],
+    "local_evidence": [
+      "SKILL.md workflow steps 4-7",
+      "references/browser-transport.md",
+      "references/reasoning-request.md",
+      "references/run-receipt.md",
+      "scripts/validate-handoff.mjs",
+      "tests/validate-handoff.test.mjs"
+    ]
+  },
+  "local_changes": {
+    "status": "applied",
+    "reason": "Accepted Sol recommendations were independently verified against local files and implemented with failing-first tests."
+  },
+  "tests": "passed"
+}
