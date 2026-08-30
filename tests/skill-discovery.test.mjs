@@ -17,3 +17,13 @@ test('publishes the Codex bridge skill under its portable package identity', asy
   assert.match(interfaceYaml, /^\s*display_name:\s*"Codex 桥接 ChatGPT"$/m);
   assert.match(interfaceYaml, /\$codex-bridge-chatgpt/);
 });
+
+test('keeps v0.1.1 release metadata aligned', async () => {
+  const packageJson = JSON.parse(await readFile(join(repoRoot, 'package.json'), 'utf8'));
+  const pluginJson = JSON.parse(await readFile(join(repoRoot, '.codex-plugin', 'plugin.json'), 'utf8'));
+  const version = (await readFile(join(repoRoot, 'VERSION'), 'utf8')).trim();
+
+  assert.equal(packageJson.version, '0.1.1');
+  assert.equal(pluginJson.version, '0.1.1');
+  assert.equal(version, '0.1.1');
+});

@@ -9,6 +9,11 @@ import test from 'node:test';
 const repoRoot = dirname(dirname(fileURLToPath(import.meta.url)));
 const sourceSkill = join(repoRoot, 'skills', 'codex-bridge-chatgpt');
 
+test('uses Node test discovery without a shell-expanded glob', async () => {
+  const packageJson = JSON.parse(await readFile(join(repoRoot, 'package.json'), 'utf8'));
+  assert.equal(packageJson.scripts.test, 'node --test');
+});
+
 test('a copied skill package passes Doctor without relying on a symlink', async () => {
   const temporaryRoot = await mkdtemp(join(tmpdir(), 'codex-bridge-chatgpt-'));
   const copiedSkill = join(temporaryRoot, basename(sourceSkill));
