@@ -14,6 +14,12 @@ test('uses Node test discovery without a shell-expanded glob', async () => {
   assert.equal(packageJson.scripts.test, 'node --test');
 });
 
+test('keeps text artifacts on canonical LF line endings across platforms', async () => {
+  const attributes = await readFile(join(repoRoot, '.gitattributes'), 'utf8');
+  assert.match(attributes, /^\* text=auto eol=lf$/m);
+  assert.match(attributes, /^\*\.png binary$/m);
+});
+
 test('a copied skill package passes Doctor without relying on a symlink', async () => {
   const temporaryRoot = await mkdtemp(join(tmpdir(), 'codex-bridge-chatgpt-'));
   const copiedSkill = join(temporaryRoot, basename(sourceSkill));

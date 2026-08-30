@@ -1,6 +1,6 @@
 {
   "name": "codex-bridge-chatgpt",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "description": "Bridge complex repository reasoning from Codex to ChatGPT while keeping execution and verification local.",
   "author": {
     "name": "wbs",

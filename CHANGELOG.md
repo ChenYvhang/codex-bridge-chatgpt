@@ -1,5 +1,9 @@
 # Changelog
 
+## 0.1.2 - 2026-08-30
+
+- Forced canonical LF text checkouts so SHA-256 evidence remains stable on Windows.
+
 ## 0.1.1 - 2026-08-30
 
 - Made the npm test command portable across POSIX shells and Windows PowerShell.
