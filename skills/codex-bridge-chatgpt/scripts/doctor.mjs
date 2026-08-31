@@ -13,6 +13,7 @@ const requiredFiles = [
   ['skill', 'SKILL.md'],
   ['interface', 'agents/openai.yaml'],
   ['validator', 'scripts/validate-handoff.mjs'],
+  ['automation_consent', 'scripts/automation-consent.mjs'],
   ['browser_transport', 'references/browser-transport.md'],
   ['context_packet', 'references/context-packet.md'],
   ['reasoning_request', 'references/reasoning-request.md'],

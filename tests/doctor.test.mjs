@@ -39,3 +39,21 @@ test('Doctor reports INVALID_INSTALLATION when a required contract is missing', 
     await rm(temporaryRoot, { recursive: true, force: true });
   }
 });
+
+test('Doctor reports INVALID_INSTALLATION when automation consent helper is missing', async () => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), 'codex-bridge-doctor-'));
+  const copiedSkill = join(temporaryRoot, 'codex-bridge-chatgpt');
+
+  try {
+    await cp(sourceSkill, copiedSkill, { recursive: true });
+    await rm(join(copiedSkill, 'scripts', 'automation-consent.mjs'));
+
+    const run = runDoctor(copiedSkill);
+    assert.equal(run.status, 1, run.stderr || run.stdout);
+    const result = JSON.parse(run.stdout);
+    assert.equal(result.status, 'INVALID_INSTALLATION');
+    assert.ok(result.checks.some((check) => check.id === 'automation_consent' && !check.ok));
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+});
