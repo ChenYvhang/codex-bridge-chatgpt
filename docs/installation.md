@@ -45,6 +45,8 @@ node scripts/automation-consent.mjs disable --json
 
 ## 卸载
 
-只移除 `$CODEX_HOME/skills/codex-bridge-chatgpt`。不要删除整个 `$CODEX_HOME`，其中可能包含其他 Skills、配置和会话。
+先在已安装 Skill 目录运行 `node scripts/automation-consent.mjs disable --json`，明确撤销自动桥接。授权状态与 Skill 安装目录分离；只移除 Skill 而不撤销状态，之后重新安装同一披露版本时仍会保持原决策。
+
+然后只移除 `$CODEX_HOME/skills/codex-bridge-chatgpt`。不要删除整个 `$CODEX_HOME`，其中可能包含其他 Skills、配置和会话。
 
 卸载后重启桌面 App 或新开任务，确认 Skill 不再出现在列表中。
