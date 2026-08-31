@@ -1,5 +1,15 @@
 # Changelog
 
+## 0.2.0 - 2026-09-01
+
+- Added versioned, persistent user consent before any automatic ChatGPT browser action.
+- Marked automatic web handoff as Unofficial Experimental with explicit non-zero account and policy risk.
+- Restricted each invocation to one Packet, one visible Send activation, and one visible copy-response action.
+- Removed DOM response extraction, automatic repair retries, model fallback, and quota-exhaustion triggers.
+- Added fail-closed blockers for login, CAPTCHA, rate limits, unusual activity, account restrictions, permissions, ambiguous controls, and selector drift.
+- Kept receipts redacted by default and reinforced that imported ChatGPT output is untrusted.
+- Added bilingual first-run, revocation, privacy, troubleshooting, and security guidance.
+
 ## 0.1.2 - 2026-08-30
 
 - Forced canonical LF text checkouts so SHA-256 evidence remains stable on Windows.

@@ -3,7 +3,7 @@
 [English](README.md) | **简体中文**
 
 [![CI](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml/badge.svg)](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.1.2-10a37f)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-0.2.0-10a37f)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-43853d)](package.json)
 
