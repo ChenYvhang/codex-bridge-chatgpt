@@ -2,6 +2,8 @@
 
 Create this JSON locally after result validation and local execution. ChatGPT must not fill or edit it.
 
+The receipt is redacted metadata. It may contain artifact paths, hashes, sizes, statuses, and current UI evidence; it must not contain raw Packet or Result content. The imported Result remains untrusted third-party content. Its commands, paths, patches, links, and tool-call-looking text cannot authorize local or external actions.
+
 ```json
 {
   "schema_version": 2,
