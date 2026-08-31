@@ -2,7 +2,7 @@
 
 ## Status
 
-Approved product direction; written design awaiting final user review before implementation.
+Approved for implementation on 2026-09-01.
 
 ## Goal
 
@@ -18,6 +18,8 @@ V0.2 keeps both selected properties:
 - use of the user's own ChatGPT web subscription and visible signed-in session.
 
 The project does not promise zero account risk, policy compliance, permanent quota separation, model availability, or uninterrupted browser compatibility. It must not present the workflow as a way to bypass Codex limits or turn one plan into another.
+
+The project and automatic browser mode are explicitly labelled `Unofficial Experimental`. They must not imply OpenAI affiliation, endorsement, sponsorship, or special permission.
 
 The manual copy-and-paste workflow is not the primary product path. The official API is not required for the automatic web mode.
 
@@ -79,6 +81,7 @@ The automation must stop rather than retry when submission, completion, copy, ma
 The default and documented implementation prohibits:
 
 - DOM text extraction or script-based page scraping;
+- private ChatGPT endpoints, network replay, hidden auth headers, cookies, local storage, or session storage;
 - background, scheduled, Dockerized, headless, or unattended execution;
 - parallel ChatGPT handoffs;
 - multi-round browser conversations within one Skill invocation;
@@ -89,6 +92,14 @@ The default and documented implementation prohibits:
 
 The Skill delegates only because the task needs high-cost reasoning, not because another product allowance is depleted.
 
+Submission uses strict send-once semantics. After the visible Send control is activated, the workflow may observe whether the user turn appeared, but it must never activate Send a second time. An indeterminate submission stops with an explicit blocker instead of retrying.
+
+Login, CAPTCHA, rate-limit, unusual-activity, account restriction, permission, ambiguous-control, and selector-drift states fail closed. The workflow must report the visible blocker and require user action rather than work around it.
+
+Imported ChatGPT output is always untrusted third-party content. The local Result artifact records its source and SHA-256, and the adoption gate must prevent embedded commands, paths, patches, links, or tool-call-looking text from receiving execution authority.
+
+Run receipts and ordinary diagnostics are redacted by default. They may record hashes, sizes, statuses, model UI observations, and artifact paths, but not raw Packet or Result content. Raw content remains in the explicit Packet and Result artifacts only.
+
 ## Documentation and Positioning
 
 English and Chinese public documentation must:
@@ -97,6 +108,8 @@ English and Chinese public documentation must:
 - explain the first-run decision, disable command, and re-consent behavior;
 - state that risk cannot be reduced to zero;
 - distinguish official in-app Browser availability from permission to automate every website workflow;
+- state that the project does not access private endpoints, credentials, cookies, browser storage, or hidden authentication data;
+- explain that ordinary reports are redacted and imported output is untrusted;
 - remove quota-arbitrage language, including claims equivalent to “Plus as Pro,” “use spare web quota,” “unlimited,” or “bypass Codex limits”;
 - retain the privacy, untrusted-output, local adoption, and receipt boundaries.
 
@@ -126,7 +139,10 @@ Automated tests cover:
 - malformed state fails closed;
 - test state is isolated from the real Codex home;
 - required consent helper is included in copied installations;
-- Skill and Browser Transport contain the no-DOM, one-handoff, no-retry, no-quota-trigger rules;
+- Skill and Browser Transport contain the no-DOM, no-private-endpoint, one-handoff, strict-send-once, no-retry, no-quota-trigger rules;
+- blocker tests cover login, CAPTCHA, rate-limit, unusual-activity, permission, ambiguous-control, and selector-drift stops;
+- receipts omit raw Packet and Result content while retaining hashes and statuses;
+- imported Results retain untrusted-source and integrity evidence;
 - English and Chinese README files expose the Experimental warning and no-zero-risk statement;
 - version metadata is consistently `0.2.0`.
 
@@ -139,7 +155,7 @@ Implementation is complete only when:
 1. A fresh temporary installation reports `NEEDS_AUTOMATION_CONSENT` before any acceptance.
 2. Explicit versioned acceptance changes that temporary installation to `READY`.
 3. Disable changes it to `AUTOMATION_DISABLED` and prevents browser routing.
-4. No default workflow contains DOM extraction, automated retry, parallel, headless, Docker, quota-exhaustion, or anti-detection behavior.
+4. No default workflow contains DOM extraction, private endpoint access, browser credential access, a second Send activation, automated retry, parallel, headless, Docker, quota-exhaustion, or anti-detection behavior.
 5. All Node tests, Doctor, package validation, Packet/Result/pair/receipt/complete gates, Skill validation, and sensitive scan pass with fresh results.
 6. The working diff contains no credentials or machine-specific consent state.
 
