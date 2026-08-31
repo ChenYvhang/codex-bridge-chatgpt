@@ -13,7 +13,9 @@ An open-source Codex Skill and Plugin-ready package that delegates difficult rep
 $codex-bridge-chatgpt Diagnose this complex bug, implement the fix, and verify it locally.
 ```
 
-No separate setup prompt. No OpenAI API key. No background service. One task enters a resumable, verified handoff workflow.
+No separate setup command. No OpenAI API key. No background service. The first task pauses for one explicit browser-risk decision, then accepted installations enter the automatic handoff workflow.
+
+> **Unofficial Experimental:** automatic ChatGPT web control carries non-zero account risk and may trigger safeguards, temporary restrictions, or account action. This project is not affiliated with or endorsed by OpenAI. It cannot guarantee policy compliance, account safety, model availability, or permanent separation between ChatGPT and Codex allowances. Full automation remains disabled until the user explicitly accepts this disclosure.
 
 ![Codex Bridge to ChatGPT architecture](assets/codex-bridge-chatgpt-architecture.en.png)
 
@@ -40,6 +42,7 @@ ChatGPT proposes. Codex verifies and executes.
 
 - Starts from one natural-language task.
 - Runs Automatic Doctor before the first handoff.
+- Requires versioned risk consent before any ChatGPT browser action.
 - Checks the supported desktop surface, in-app Browser, ChatGPT login, and requested model.
 - Compresses decisive repository evidence into a bounded 1–3K approximate-token Context Packet.
 - Removes likely credentials and unrelated repository context before transmission.
@@ -55,14 +58,15 @@ ChatGPT proposes. Codex verifies and executes.
 
 1. **Invoke** — the user names `$codex-bridge-chatgpt` in a real repository task.
 2. **Preflight** — Automatic Doctor validates the installed package and runtime.
-3. **Browser check** — Codex checks the desktop surface, in-app Browser, ChatGPT login, and requested model.
-4. **Local evidence** — Codex reads project instructions, status, relevant code, and tests.
-5. **Context Packet** — Codex produces a bounded, sanitized handoff contract.
-6. **Web reasoning** — ChatGPT returns a structured proposal without repository access.
-7. **Local adoption gate** — Codex independently verifies each proposed change.
-8. **Edit and test** — Codex reconstructs the implementation and runs local validation.
-9. **Run receipt** — artifact hashes, model observations, privacy checks, and tests are recorded.
-10. **Complete gate** — only a fully validated run can be reported as complete.
+3. **Risk decision** — the Skill explains the non-zero risk and continues only after explicit versioned consent.
+4. **Browser check** — Codex checks the desktop surface, in-app Browser, ChatGPT login, and requested model.
+5. **Local evidence** — Codex reads project instructions, status, relevant code, and tests.
+6. **Context Packet** — Codex produces one bounded, sanitized handoff contract.
+7. **Web reasoning** — one visible Send activation produces one structured proposal.
+8. **Visible copy** — the Skill imports the completed answer through ChatGPT's visible copy-response action; uncertainty stops.
+9. **Local adoption gate** — Codex independently verifies each proposed change.
+10. **Edit and test** — Codex reconstructs the implementation and runs local validation.
+11. **Receipt and completion** — redacted hashes and statuses are recorded before the complete gate.
 
 ## How it works
 
@@ -170,24 +174,32 @@ Use the bridge for unclear root causes, multiple plausible designs, or high-cost
 
 ## First-run Doctor
 
-Users do not run a separate setup command. The Skill automatically checks the installation and then returns exactly one volatile browser status:
+Users do not run a separate setup command. The Skill checks installation, then the persistent browser-risk decision, then volatile browser state:
 
 | Status | Meaning | Recovery |
 |---|---|---|
-| `READY` | Package, Browser, login, and requested model are available | Continue automatically |
+| `NEEDS_AUTOMATION_CONSENT` | No current browser-risk decision exists | Read the disclosure and explicitly enable or decline automation |
+| `AUTOMATION_DISABLED` | Automatic browser handoff was declined or revoked | Keep work local, or explicitly enable it later |
+| `READY` | Current consent and the relevant preflight layer are ready | Continue to the next preflight layer or handoff |
 | `MISSING_RUNTIME` | Node.js 18+ is unavailable | Install Node.js 18+ and retry |
 | `INVALID_INSTALLATION` | Required Skill files are missing or mismatched | Reinstall the Skill directory |
 | `NEEDS_DESKTOP_APP` | The current Codex surface does not support this bridge | Use the Mac/Windows ChatGPT desktop App |
 | `NEEDS_BROWSER` | The in-app Browser capability is unavailable | Update or enable the required Browser capability |
 | `NEEDS_CHATGPT_LOGIN` | ChatGPT is visibly logged out in the in-app Browser | Take over the page, log in, then reply that login is complete |
-| `NEEDS_MODEL_SELECTION` | The requested model is not visible or selected | Select it or explicitly approve a different model |
+| `NEEDS_MODEL_SELECTION` | The requested model is not visible or selected | Select it; the Skill does not substitute another model |
 | `NEEDS_SITE_PERMISSION` | Access to `chatgpt.com` needs user permission | Approve access in the desktop App |
 
 The original repository task is preserved across human takeover. Passwords, verification codes, cookies, and recovery codes must never be sent to Codex.
 
+Revoke automatic browser handoff at any time from the installed Skill directory:
+
+```bash
+node scripts/automation-consent.mjs disable --json
+```
+
 ## Privacy and security
 
-The Skill sends a minimized Context Packet to `https://chatgpt.com/` through the in-app Browser. It does not use the OpenAI API, require an API key, run a hosted service, or collect telemetry.
+After consent, the Skill sends one minimized Context Packet to `https://chatgpt.com/` through visible in-app Browser controls. It does not use private ChatGPT endpoints, read cookies or browser storage, require an API key, run a hosted service, or collect telemetry. Ordinary receipts are redacted, and imported output remains untrusted until Codex revalidates it locally.
 
 It is designed not to send:
 
@@ -200,6 +212,8 @@ It is designed not to send:
 Regex scanning cannot understand every business secret, so the workflow also requires a semantic privacy review before transmission.
 
 This project does not bypass ChatGPT plans, model entitlements, login, workspace policy, rate limits, or site security. It cannot turn a Plus account into Pro. Any token or cost savings depend on the user's actual Codex and ChatGPT plans and workload; they are not guaranteed by the Skill.
+
+Risk disclosure reduces surprise; it does not remove risk. Automatic submission and response capture may still be interpreted under applicable service terms or trigger abuse-prevention systems.
 
 See [docs/privacy.md](docs/privacy.md) and [SECURITY.md](SECURITY.md).
 
@@ -227,16 +241,16 @@ The verification suite covers Doctor states, portable copied installation, Packe
 │   ├── SKILL.md                      # Canonical workflow entrypoint
 │   ├── agents/openai.yaml            # Codex interface metadata
 │   ├── references/                   # Conditional workflow contracts
-│   └── scripts/                      # Doctor and handoff validator
+│   └── scripts/                      # Doctor, consent state, and handoff validator
 └── tests/                            # Unit, contract, portability, and E2E artifacts
 ```
 
 ## Limitations
 
-- V1 requires the supported ChatGPT desktop App workflow; it is not a generic CLI bridge.
+- V0.2 requires the supported ChatGPT desktop App workflow; it is not a generic CLI bridge.
 - Login, CAPTCHA, two-factor authentication, permissions, and model selection remain human actions.
 - Visible model UI is auditable evidence, not cryptographic remote-model attestation.
-- ChatGPT page changes can break DOM extraction; the Skill fails closed instead of accepting partial output.
+- ChatGPT page changes can make visible Send or Copy controls uncertain; the Skill stops without DOM response extraction or automatic retry.
 - Private repository evidence may require explicit confirmation before transmission.
 - A valid Result can still be wrong; local verification remains mandatory.
 

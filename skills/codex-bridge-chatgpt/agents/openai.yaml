@@ -1,4 +1,4 @@
 interface:
   display_name: "Codex 桥接 ChatGPT"
-  short_description: "让 Codex 调用 ChatGPT Sol 完成复杂仓库推理"
+  short_description: "实验性自动桥接 ChatGPT 网页推理，由 Codex 本地验证"
   default_prompt: "使用 $codex-bridge-chatgpt 处理这个复杂仓库任务。"

@@ -19,6 +19,7 @@ test('the portable verifier runs every deterministic package gate', () => {
     receipt.checks.map((check) => check.id),
     [
       'doctor',
+      'browser_safety_contract',
       'packet',
       'result',
       'pair',

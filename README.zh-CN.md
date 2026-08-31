@@ -13,7 +13,9 @@
 $codex-bridge-chatgpt 诊断这个复杂 Bug，完成修复并在本地验证。
 ```
 
-不需要单独执行 setup，不需要 OpenAI API Key，不运行后台服务。一句话即可进入可恢复、可验证的推理交接流程。
+不需要单独执行 setup 命令，不需要 OpenAI API Key，不运行后台服务。首次任务会先要求用户明确决定是否接受浏览器自动化风险；接受后才进入全自动交接流程。
+
+> **Unofficial Experimental（非官方实验功能）：** 自动控制 ChatGPT 网页端存在非零账号风险，可能触发安全机制、临时限制或账号处置。本项目与 OpenAI 无关联，也未获得其认可或授权；不能保证合规、账号安全、模型可用性或 ChatGPT/Codex 额度永久分离。用户明确接受风险前，全自动桥接默认关闭。
 
 ![Codex 桥接 ChatGPT 架构](assets/codex-bridge-chatgpt-architecture.png)
 
@@ -40,6 +42,7 @@ ChatGPT 负责提出方案，Codex 负责验证与执行。
 
 - 用户只需要提交一句自然语言任务。
 - 首次交接前自动运行 Doctor。
+- 任何 ChatGPT 浏览器操作前必须通过版本化风险授权。
 - 检查桌面 App、内置 Browser、ChatGPT 登录和目标模型。
 - 把决定性项目证据压缩为 1–3K approximate-token Context Packet。
 - 发送前移除疑似凭据和无关项目内容。
@@ -55,14 +58,15 @@ ChatGPT 负责提出方案，Codex 负责验证与执行。
 
 1. **一句话调用**：用户在真实仓库任务中点名 `$codex-bridge-chatgpt`。
 2. **自动预检**：Doctor 校验 Skill 安装和本地运行时。
-3. **浏览器检查**：Codex 检查桌面环境、内置 Browser、ChatGPT 登录和目标模型。
-4. **本地取证**：Codex 读取项目规则、状态、相关代码和测试。
-5. **上下文压缩**：Codex 生成有界、脱敏的 Context Packet。
-6. **网页推理**：ChatGPT 在没有仓库访问权的前提下返回结构化方案。
-7. **本地采纳门**：Codex 独立验证每条建议。
-8. **修改与测试**：Codex 重建实现步骤并运行本地验证。
-9. **运行回执**：记录产物哈希、模型观察、隐私检查和测试状态。
-10. **完成闸门**：只有完整验证的运行才能报告为完成。
+3. **风险决策**：Skill 明确说明非零风险，只在用户完成版本化授权后继续。
+4. **浏览器检查**：Codex 检查桌面环境、内置 Browser、ChatGPT 登录和目标模型。
+5. **本地取证**：Codex 读取项目规则、状态、相关代码和测试。
+6. **上下文压缩**：Codex 生成一个有界、脱敏的 Context Packet。
+7. **网页推理**：只激活一次可见发送控件，获取一个结构化方案。
+8. **可见复制**：只使用 ChatGPT 可见的“复制回答”操作；状态不确定立即停止。
+9. **本地采纳门**：Codex 独立验证每条建议。
+10. **修改与测试**：Codex 重建实现步骤并运行本地验证。
+11. **回执与完成**：记录脱敏哈希和状态，通过完整闸门后才能宣布完成。
 
 ## 工作原理
 
@@ -170,24 +174,32 @@ $codex-bridge-chatgpt 比较可能的设计，基于证据选择一个，然后�
 
 ## 首次运行 Doctor
 
-用户不需要单独运行 setup。Skill 会自动检查安装，然后返回一个明确状态：
+用户不需要单独运行 setup。Skill 依次检查安装、持久化风险决策和当前浏览器状态：
 
 | 状态 | 含义 | 恢复方式 |
 |---|---|---|
-| `READY` | 安装、Browser、登录和目标模型均可用 | 自动继续 |
+| `NEEDS_AUTOMATION_CONSENT` | 当前没有有效的浏览器自动化风险决策 | 阅读风险说明并明确启用或拒绝 |
+| `AUTOMATION_DISABLED` | 用户已经拒绝或撤销全自动桥接 | 保持本地执行，或稍后明确重新启用 |
+| `READY` | 当前授权或对应预检层已经就绪 | 进入下一层预检或开始桥接 |
 | `MISSING_RUNTIME` | Node.js 18+ 不可用 | 安装 Node.js 18+ 后重试 |
 | `INVALID_INSTALLATION` | Skill 文件缺失或包名不匹配 | 重新安装 Skill 目录 |
 | `NEEDS_DESKTOP_APP` | 当前 Codex 环境不支持桥接 | 改用 Mac/Windows ChatGPT 桌面 App |
 | `NEEDS_BROWSER` | 内置 Browser 能力不可用 | 更新或启用所需 Browser 能力 |
 | `NEEDS_CHATGPT_LOGIN` | 内置 Browser 中的 ChatGPT 未登录 | 接管页面登录，然后回复已登录 |
-| `NEEDS_MODEL_SELECTION` | 目标模型不可见或未选中 | 选择目标模型，或明确批准其他模型 |
+| `NEEDS_MODEL_SELECTION` | 目标模型不可见或未选中 | 选择目标模型；Skill 不会替换为其他模型 |
 | `NEEDS_SITE_PERMISSION` | 访问 `chatgpt.com` 需要用户授权 | 在桌面 App 中批准访问 |
 
 人工接管期间原仓库任务会被保留。密码、验证码、Cookie 和恢复码不能发送给 Codex。
 
+可随时在已安装 Skill 目录撤销全自动桥接：
+
+```bash
+node scripts/automation-consent.mjs disable --json
+```
+
 ## 隐私与安全
 
-Skill 通过内置 Browser 把最小化 Context Packet 发送到 `https://chatgpt.com/`。它不使用 OpenAI API、不要求 API Key、不运行托管服务，也不收集遥测。
+用户授权后，Skill 通过内置 Browser 的可见控件把一个最小化 Context Packet 发送到 `https://chatgpt.com/`。它不调用 ChatGPT 私有接口，不读取 Cookie、浏览器存储或隐藏认证信息，不要求 API Key，不运行托管服务，也不收集遥测。普通回执默认脱敏，网页输出在 Codex 本地重新验证前始终是不可信数据。
 
 设计上不会主动发送：
 
@@ -200,6 +212,8 @@ Skill 通过内置 Browser 把最小化 Context Packet 发送到 `https://chatgp
 正则扫描无法理解所有业务秘密，因此发送前还必须进行语义隐私审查。
 
 本项目不会绕过 ChatGPT 套餐、模型权限、登录、工作区策略、限额或站点安全机制，也不能把 Plus 账号变成 Pro。实际 Token 或费用节省取决于用户真实的 Codex、ChatGPT 套餐和任务类型，本 Skill 不做保证。
+
+风险说明只能让用户知情，不能消除风险。自动提交和结果获取仍可能受到适用服务条款解释或滥用防护系统影响。
 
 详见 [docs/privacy.md](docs/privacy.md) 和 [SECURITY.md](SECURITY.md)。
 
@@ -227,16 +241,16 @@ npm run validate
 │   ├── SKILL.md                      # 唯一工作流入口
 │   ├── agents/openai.yaml            # Codex 界面元数据
 │   ├── references/                   # 按需加载的工作流契约
-│   └── scripts/                      # Doctor 与交接校验器
+│   └── scripts/                      # Doctor、授权状态与交接校验器
 └── tests/                            # 单测、契约、可移植性与 E2E 产物
 ```
 
 ## 当前限制
 
-- V1 依赖受支持的 ChatGPT 桌面 App，不是通用 CLI 桥接器。
+- V0.2 依赖受支持的 ChatGPT 桌面 App，不是通用 CLI 桥接器。
 - 登录、CAPTCHA、双因素认证、权限和模型选择仍由用户完成。
 - 可见模型 UI 是可审计证据，不是远端模型的密码学证明。
-- ChatGPT 页面变化可能破坏 DOM 提取；Skill 会明确失败，不接受残缺结果。
+- ChatGPT 页面变化可能让可见发送或复制控件无法确认；Skill 不进行 DOM 回答提取或自动重试，而是直接停止。
 - 私有仓库证据在发送前可能需要用户即时确认。
 - Result 即使结构合法也可能出错，本地验证不能省略。
 

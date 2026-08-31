@@ -1,7 +1,7 @@
 {
   "name": "codex-bridge-chatgpt",
   "version": "0.1.2",
-  "description": "Bridge complex repository reasoning from Codex to ChatGPT while keeping execution and verification local.",
+  "description": "Unofficial experimental bridge for visible ChatGPT web reasoning with local Codex verification.",
   "author": {
     "name": "wbs",
     "url": "https://github.com/anightmonarch"
@@ -19,8 +19,8 @@
   "skills": "./skills/",
   "interface": {
     "displayName": "Codex 桥接 ChatGPT",
-    "shortDescription": "Use ChatGPT for hard reasoning while Codex verifies locally.",
-    "longDescription": "A verified reasoning handoff for Mac and Windows ChatGPT desktop users. Codex minimizes repository evidence, sends a bounded packet to ChatGPT in the built-in browser, validates the result, and keeps all edits and tests local.",
+    "shortDescription": "Experimental ChatGPT web handoff with local verification.",
+    "longDescription": "An unofficial experimental reasoning handoff for Mac and Windows ChatGPT desktop users. After explicit risk consent, Codex minimizes repository evidence, sends one bounded packet through visible ChatGPT web controls, validates the untrusted result, and keeps all edits and tests local.",
     "developerName": "wbs",
     "category": "Developer Tools",
     "capabilities": [

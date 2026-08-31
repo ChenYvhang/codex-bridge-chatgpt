@@ -9,6 +9,8 @@
 
 Codex 登录与内置 Browser 中的 ChatGPT 登录是两个独立状态。Skill 不读取或迁移普通浏览器的 Cookie。
 
+全自动网页桥接是 Unofficial Experimental 功能，存在非零账号和策略风险。首次使用时，Skill 会先展示完整说明；用户明确接受前不会打开或控制 ChatGPT。该授权不代表 OpenAI 认可，也不能保证账号安全或额度永久分离。
+
 ## 推荐安装
 
 在 Codex 中发送：
@@ -27,11 +29,17 @@ $skill-installer Install codex-bridge-chatgpt from https://github.com/anightmona
 $codex-bridge-chatgpt 分析这个仓库问题并给出经过本地测试的修复
 ```
 
-Skill 会自动运行 Doctor。`READY` 表示本地安装、Browser、登录和模型预检都已通过。
+Skill 会自动运行 Doctor。首次会先返回 `NEEDS_AUTOMATION_CONSENT`；明确接受后才检查 Browser、登录和模型。只有对应层返回 `READY` 才会继续。
+
+撤销全自动桥接：
+
+```bash
+node scripts/automation-consent.mjs disable --json
+```
 
 ## 升级
 
-V1 的安装器不会覆盖同名目录。升级时先保留当前目录作为备份，再使用 Skill Installer 安装新版本。确认新版本 Doctor 和验证命令通过后，再清理备份。
+安装器不会覆盖同名目录。升级时先保留当前目录作为备份，再使用 Skill Installer 安装新版本。确认新版本 Doctor 和验证命令通过后，再清理备份。风险说明版本变化后，旧授权失效并要求重新决策。
 
 不要让升级脚本覆盖其他 `$CODEX_HOME/skills` 内容。
 

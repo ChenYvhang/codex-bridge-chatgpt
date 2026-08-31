@@ -69,6 +69,7 @@ async function readmeCheck(id, filename, requiredFragments) {
 
 const checks = [
   runNode('doctor', [doctor, '--json']),
+  runNode('browser_safety_contract', ['--test', 'tests/browser-safety-contract.test.mjs']),
   runNode('packet', [validator, 'packet', 'tests/artifacts/e2e-packet-1k.md']),
   runNode('result', [validator, 'result', 'tests/artifacts/e2e-result-1k-sol.md']),
   runNode('pair', [
@@ -88,6 +89,10 @@ const checks = [
     '## Installation',
     '## Quick start',
     'assets/codex-bridge-chatgpt-architecture.en.png',
+    'Unofficial Experimental',
+    'non-zero account risk',
+    'NEEDS_AUTOMATION_CONSENT',
+    'AUTOMATION_DISABLED',
   ]),
   await readmeCheck('readme_zh', 'README.zh-CN.md', [
     '[English](README.md)',
@@ -96,6 +101,10 @@ const checks = [
     '## 安装',
     '## 快速上手',
     'assets/codex-bridge-chatgpt-architecture.png',
+    'Unofficial Experimental',
+    '非零账号风险',
+    'NEEDS_AUTOMATION_CONSENT',
+    'AUTOMATION_DISABLED',
   ]),
 ];
 
