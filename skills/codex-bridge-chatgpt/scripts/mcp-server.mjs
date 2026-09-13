@@ -158,14 +158,26 @@ export function createMcpDispatcher({ directory = DEFAULT_STATE_DIRECTORY, works
 export async function runStdioServer({ input = process.stdin, output = process.stdout, ...options } = {}) {
   const dispatch = createMcpDispatcher(options);
   const lines = createInterface({ input, crlfDelay: Infinity, terminal: false });
-  for await (const line of lines) {
-    if (!line.trim()) continue;
+  const handleLine = async (line) => {
+    if (!line.trim()) return;
     let response;
     try { response = await dispatch(JSON.parse(line)); } catch { response = rpcError(null, -32700, 'Parse error'); }
     if (response) await new Promise((resolveWrite, rejectWrite) => {
       output.write(`${JSON.stringify(response)}\n`, (error) => error ? rejectWrite(error) : resolveWrite());
     });
-  }
+  };
+  await new Promise((resolveRun, rejectRun) => {
+    let pending = Promise.resolve();
+    let failure = null;
+    lines.on('line', (line) => {
+      pending = pending.then(() => failure ? undefined : handleLine(line)).catch((error) => {
+        failure = error;
+        lines.close();
+      });
+    });
+    lines.once('error', (error) => { failure = error; lines.close(); });
+    lines.once('close', () => pending.then(() => failure ? rejectRun(failure) : resolveRun()));
+  });
 }
 
 async function main() {

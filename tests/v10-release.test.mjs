@@ -75,7 +75,12 @@ test('the extracted release runs Doctor without repository-local dependencies', 
     ].map((message) => JSON.stringify(message)).join('\n') + '\n';
     const smoke = spawnSync(process.execPath, [mcp, '--dir', join(root, 'empty-runtime'), '--workspace', packageRoot], { cwd: packageRoot, input, encoding: 'utf8', timeout: 10000 });
     assert.equal(smoke.status, 0, smoke.stderr || smoke.stdout);
-    const replies = smoke.stdout.trim().split('\n').map((line) => JSON.parse(line));
+    assert.ok(smoke.stdout.trim(), 'MCP produced no JSON-RPC response');
+    const outputLines = smoke.stdout.trim().split(/\r?\n/);
+    const replies = outputLines.map((line, index) => {
+      try { return JSON.parse(line); }
+      catch { throw new Error(`MCP response ${index + 1}/${outputLines.length} is incomplete (${line.length} characters)`); }
+    });
     assert.deepEqual(replies.map((reply) => reply.id), [1, 2, 3]);
     assert.equal(replies[0].result.serverInfo.version, '1.0.0');
     assert.equal(replies[1].result.tools.length, 5);

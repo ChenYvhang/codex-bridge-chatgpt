@@ -12,7 +12,7 @@
 - Added Release Doctor, a machine-readable release policy, zero-dependency inventory, deterministic ZIP creation, SHA256SUMS, repeated-build comparison, and extracted-package Doctor tests.
 - Expanded the v1.0 test and verification gates for scope tampering, v2 upgrades, migration transactions, setup conflicts, diagnostic privacy, quiet polling, reproducible packaging, and clean extracted installs.
 - Final review blocked symbolic-link escapes in mediated search and artifact writes, bound applied artifacts to their reviewed content and metadata, and confined setup and release inputs to their intended project paths.
-- Wait for each STDIO MCP response to flush before processing EOF, so extracted-package smoke tests and short-lived clients receive complete JSON on macOS.
+- Queue STDIO MCP input lines before asynchronous dispatch and wait for each response to flush, so short-lived clients receive complete JSON on macOS.
 
 ## 0.9.0 - 2026-09-14
 
