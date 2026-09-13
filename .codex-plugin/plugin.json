@@ -3,11 +3,11 @@
   "version": "1.0.0",
   "description": "Persistent ChatGPT planning with local Codex execution, read-only MCP context tools, and crash-safe state coordination.",
   "author": {
-    "name": "wbs",
-    "url": "https://github.com/anightmonarch"
+    "name": "Yuhang Chen",
+    "url": "https://github.com/ChenYvhang"
   },
-  "homepage": "https://github.com/anightmonarch/codex-bridge-chatgpt#readme",
-  "repository": "https://github.com/anightmonarch/codex-bridge-chatgpt",
+  "homepage": "https://github.com/ChenYvhang/codex-bridge-chatgpt#readme",
+  "repository": "https://github.com/ChenYvhang/codex-bridge-chatgpt",
   "license": "MIT",
   "keywords": [
     "codex",
@@ -22,15 +22,15 @@
     "displayName": "Codex 持续桥接 ChatGPT",
     "shortDescription": "Persistent Chat context with local Codex execution.",
     "longDescription": "A persistent handoff for Mac and Windows ChatGPT desktop users. Codex reuses one ordinary ChatGPT Chat for planning, writing, review, and reasoning, synchronizes bounded deltas and locally verified receipts, and retains local authority over computer actions, edits, and tests. Direct app chat coordination is preferred; visible web automation remains an explicitly consented fallback.",
-    "developerName": "wbs",
+    "developerName": "Yuhang Chen",
     "category": "Developer Tools",
     "capabilities": [
       "Interactive",
       "Read",
       "Write"
     ],
-    "websiteURL": "https://github.com/anightmonarch/codex-bridge-chatgpt",
-    "privacyPolicyURL": "https://github.com/anightmonarch/codex-bridge-chatgpt/blob/main/docs/privacy.md",
+    "websiteURL": "https://github.com/ChenYvhang/codex-bridge-chatgpt",
+    "privacyPolicyURL": "https://github.com/ChenYvhang/codex-bridge-chatgpt/blob/main/docs/privacy.md",
     "defaultPrompt": [
       "Use $codex-bridge-chatgpt to keep this task synchronized with one ordinary ChatGPT Chat.",
       "Use $codex-bridge-chatgpt to let ChatGPT plan and draft while Codex executes and verifies.",

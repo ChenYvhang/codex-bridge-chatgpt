@@ -2,14 +2,14 @@
 
 [English](README.md) | **简体中文**
 
-[![CI](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml/badge.svg)](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml)
+[![CI](https://github.com/ChenYvhang/codex-bridge-chatgpt/actions/workflows/ci.yml/badge.svg)](https://github.com/ChenYvhang/codex-bridge-chatgpt/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-10a37f)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-43853d)](package.json)
 
 一个开源的 Codex Skill 和 Plugin-ready 项目：固定使用同一个普通 ChatGPT Chat 贯穿规划、写作、文件生成、审查和推理，同时把实时证据、电脑操作、产物采纳、修改和测试留在 Codex 本地。
 
-本分支直接建立在上游提交 `56e36c2feeb6705376c1d1dc50dbec52ea43d4f4` 之上；保留的上游基础与本分支新增功能见 [UPSTREAM.md](UPSTREAM.md)。
+本项目直接建立在上游提交 `56e36c2feeb6705376c1d1dc50dbec52ea43d4f4` 之上；保留的上游基础与新增功能见 [UPSTREAM.md](UPSTREAM.md)。
 
 ```text
 $codex-bridge-chatgpt 诊断这个复杂 Bug，完成修复并在本地验证。
@@ -156,7 +156,7 @@ Result 校验通过不代表获得执行权限。Codex 必须重新打开相关�
 如果当前 Codex 已提供 `$skill-installer`，直接发送：
 
 ```text
-$skill-installer Install codex-bridge-chatgpt from https://github.com/anightmonarch/codex-bridge-chatgpt/tree/main/skills/codex-bridge-chatgpt
+$skill-installer Install codex-bridge-chatgpt from https://github.com/ChenYvhang/codex-bridge-chatgpt/tree/main/skills/codex-bridge-chatgpt
 ```
 
 安装完成后新开一个 Codex 任务，让 Skill 列表重新加载。
@@ -164,7 +164,7 @@ $skill-installer Install codex-bridge-chatgpt from https://github.com/anightmona
 ### macOS 手动安装
 
 ```bash
-git clone --depth 1 https://github.com/anightmonarch/codex-bridge-chatgpt.git
+git clone --depth 1 https://github.com/ChenYvhang/codex-bridge-chatgpt.git
 mkdir -p "$HOME/.codex/skills"
 cp -R codex-bridge-chatgpt/skills/codex-bridge-chatgpt "$HOME/.codex/skills/"
 ```
@@ -172,7 +172,7 @@ cp -R codex-bridge-chatgpt/skills/codex-bridge-chatgpt "$HOME/.codex/skills/"
 ### Windows PowerShell 手动安装
 
 ```powershell
-git clone --depth 1 https://github.com/anightmonarch/codex-bridge-chatgpt.git
+git clone --depth 1 https://github.com/ChenYvhang/codex-bridge-chatgpt.git
 New-Item -ItemType Directory -Force "$HOME\.codex\skills" | Out-Null
 Copy-Item -Recurse "codex-bridge-chatgpt\skills\codex-bridge-chatgpt" "$HOME\.codex\skills\"
 ```

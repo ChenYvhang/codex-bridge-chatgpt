@@ -2,14 +2,14 @@
 
 **English** | [简体中文](README.zh-CN.md)
 
-[![CI](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml/badge.svg)](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml)
+[![CI](https://github.com/ChenYvhang/codex-bridge-chatgpt/actions/workflows/ci.yml/badge.svg)](https://github.com/ChenYvhang/codex-bridge-chatgpt/actions/workflows/ci.yml)
 [![Version](https://img.shields.io/badge/version-1.0.0-10a37f)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-43853d)](package.json)
 
 An open-source Codex Skill and Plugin-ready package that keeps one ordinary ChatGPT Chat as a persistent planning, writing, review, and reasoning partner while Codex retains local evidence, computer actions, artifact adoption, edits, and tests.
 
-This branch is built directly on upstream commit `56e36c2feeb6705376c1d1dc50dbec52ea43d4f4`; see [UPSTREAM.md](UPSTREAM.md) for the retained base and local additions.
+This project is built directly on upstream commit `56e36c2feeb6705376c1d1dc50dbec52ea43d4f4`; see [UPSTREAM.md](UPSTREAM.md) for the retained base and local additions.
 
 ```text
 $codex-bridge-chatgpt Diagnose this complex bug, implement the fix, and verify it locally.
@@ -156,7 +156,7 @@ The deterministic package is tested on Linux, macOS, and Windows. End-to-end web
 If your Codex installation includes `$skill-installer`, send this in Codex:
 
 ```text
-$skill-installer Install codex-bridge-chatgpt from https://github.com/anightmonarch/codex-bridge-chatgpt/tree/main/skills/codex-bridge-chatgpt
+$skill-installer Install codex-bridge-chatgpt from https://github.com/ChenYvhang/codex-bridge-chatgpt/tree/main/skills/codex-bridge-chatgpt
 ```
 
 Open a new Codex task after installation so the Skill list is reloaded.
@@ -164,7 +164,7 @@ Open a new Codex task after installation so the Skill list is reloaded.
 ### Manual installation on macOS
 
 ```bash
-git clone --depth 1 https://github.com/anightmonarch/codex-bridge-chatgpt.git
+git clone --depth 1 https://github.com/ChenYvhang/codex-bridge-chatgpt.git
 mkdir -p "$HOME/.codex/skills"
 cp -R codex-bridge-chatgpt/skills/codex-bridge-chatgpt "$HOME/.codex/skills/"
 ```
@@ -172,7 +172,7 @@ cp -R codex-bridge-chatgpt/skills/codex-bridge-chatgpt "$HOME/.codex/skills/"
 ### Manual installation on Windows PowerShell
 
 ```powershell
-git clone --depth 1 https://github.com/anightmonarch/codex-bridge-chatgpt.git
+git clone --depth 1 https://github.com/ChenYvhang/codex-bridge-chatgpt.git
 New-Item -ItemType Directory -Force "$HOME\.codex\skills" | Out-Null
 Copy-Item -Recurse "codex-bridge-chatgpt\skills\codex-bridge-chatgpt" "$HOME\.codex\skills\"
 ```

@@ -16,7 +16,7 @@ Codex 登录与内置 Browser 中的 ChatGPT 登录是两个独立状态。Skill
 在 Codex 中发送：
 
 ```text
-$skill-installer Install codex-bridge-chatgpt from https://github.com/anightmonarch/codex-bridge-chatgpt/tree/main/skills/codex-bridge-chatgpt
+$skill-installer Install codex-bridge-chatgpt from https://github.com/ChenYvhang/codex-bridge-chatgpt/tree/main/skills/codex-bridge-chatgpt
 ```
 
 安装完成后新开一个任务，使 Codex 重新加载 Skill 列表。
