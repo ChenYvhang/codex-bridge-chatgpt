@@ -6,6 +6,8 @@
 $codex-bridge-chatgpt 帮我定位这个复杂 Bug 的根因并完成修复
 ```
 
+`setup` 只用于可选的项目级只读 MCP 工具。需要时先预览配置计划，检查后再应用；普通 Skill 工作流会直接创建和延续会话状态。
+
 ## 自动流程
 
 1. 本地 Doctor 检查 Skill 文件和 Node.js。
@@ -17,7 +19,7 @@ $codex-bridge-chatgpt 帮我定位这个复杂 Bug 的根因并完成修复
 7. 页面未登录时，Skill 返回 `NEEDS_CHATGPT_LOGIN` 并请用户接管。
 8. 用户登录后回复“已登录”。Skill 重新检查浏览器状态并继续原任务。
 9. 目标模型不可用时返回 `NEEDS_MODEL_SELECTION`，不会静默更换模型。
-10. 所有状态为 `READY` 后才构造一个 Packet、发送一次并复制一次回答。
+10. 所有状态为 `READY` 后才构造一个带 `conversation_scope_id` 的 Packet、记录上下文来源清单、发送一次并复制一次回答。
 
 ## 撤销全自动桥接
 

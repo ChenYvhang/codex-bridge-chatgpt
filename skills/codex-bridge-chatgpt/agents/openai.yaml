@@ -1,4 +1,4 @@
 interface:
-  display_name: "Codex 桥接 ChatGPT"
-  short_description: "实验性自动桥接 ChatGPT 网页推理，由 Codex 本地验证"
-  default_prompt: "使用 $codex-bridge-chatgpt 处理这个复杂仓库任务。"
+  display_name: "Codex 持续桥接 ChatGPT"
+  short_description: "作用域绑定持续 Chat，上下文省 Token 且可恢复"
+  default_prompt: "使用 $codex-bridge-chatgpt 优化并准备这个任务，通过作用域绑定的固定 ChatGPT Chat 持续同步；用只读本地 MCP 获取最少上下文，并报告状态、验证和 Token 成本。"

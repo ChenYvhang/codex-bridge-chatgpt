@@ -1,5 +1,8 @@
 .DS_Store
 node_modules/
 coverage/
+dist/
 *.log
 tests/tmp/
+.codex/
+tests/live-bridge/

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "name": "codex-bridge-chatgpt",
+  "version": "1.0.0",
+  "state_schema_version": 3,
+  "context_schema_version": 2,
+  "node": ">=18",
+  "archive_format": "zip-store-v1",
+  "timestamp_policy": "1980-01-01T00:00:00Z",
+  "generated_manifest": "BUILD-MANIFEST.json",
+  "self_hash_excluded": true,
+  "root_files": [
+    ".gitattributes",
+    ".gitignore",
+    "AGENTS.md",
+    "CHANGELOG.md",
+    "CONTRIBUTING.md",
+    "LICENSE",
+    "README.md",
+    "README.zh-CN.md",
+    "SECURITY.md",
+    "SUPPORT.md",
+    "UPSTREAM.md",
+    "VERSION",
+    "package.json",
+    "release-manifest.json"
+  ],
+  "directories": [
+    ".codex-plugin",
+    ".github",
+    "assets",
+    "docs",
+    "scripts",
+    "skills",
+    "tests"
+  ],
+  "excluded_segments": [
+    ".git",
+    ".codex",
+    "node_modules",
+    "coverage",
+    "dist"
+  ],
+  "validation": [
+    "node --test",
+    "node skills/codex-bridge-chatgpt/scripts/doctor.mjs --json",
+    "node skills/codex-bridge-chatgpt/scripts/doctor.mjs --release --json",
+    "node scripts/verify.mjs --json",
+    "node scripts/build-release.mjs --check-reproducible"
+  ]
+}

@@ -57,3 +57,21 @@ test('Doctor reports INVALID_INSTALLATION when automation consent helper is miss
     await rm(temporaryRoot, { recursive: true, force: true });
   }
 });
+
+test('Doctor reports INVALID_INSTALLATION when persistent context state helper is missing', async () => {
+  const temporaryRoot = await mkdtemp(join(tmpdir(), 'codex-bridge-doctor-'));
+  const copiedSkill = join(temporaryRoot, 'codex-bridge-chatgpt');
+
+  try {
+    await cp(sourceSkill, copiedSkill, { recursive: true });
+    await rm(join(copiedSkill, 'scripts', 'context-state.mjs'));
+
+    const run = runDoctor(copiedSkill);
+    assert.equal(run.status, 1, run.stderr || run.stdout);
+    const result = JSON.parse(run.stdout);
+    assert.equal(result.status, 'INVALID_INSTALLATION');
+    assert.ok(result.checks.some((check) => check.id === 'context_state' && !check.ok));
+  } finally {
+    await rm(temporaryRoot, { recursive: true, force: true });
+  }
+});

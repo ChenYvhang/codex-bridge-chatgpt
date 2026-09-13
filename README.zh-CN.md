@@ -3,23 +3,29 @@
 [English](README.md) | **简体中文**
 
 [![CI](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml/badge.svg)](https://github.com/anightmonarch/codex-bridge-chatgpt/actions/workflows/ci.yml)
-[![Version](https://img.shields.io/badge/version-0.2.0-10a37f)](CHANGELOG.md)
+[![Version](https://img.shields.io/badge/version-1.0.0-10a37f)](CHANGELOG.md)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Node.js 18+](https://img.shields.io/badge/Node.js-18%2B-43853d)](package.json)
 
-一个开源的 Codex Skill 和 Plugin-ready 项目：把复杂仓库任务的高成本推理交给 ChatGPT 网页端，同时把证据收集、文件修改、测试和最终判断保留在 Codex 本地。
+一个开源的 Codex Skill 和 Plugin-ready 项目：固定使用同一个普通 ChatGPT Chat 贯穿规划、写作、文件生成、审查和推理，同时把实时证据、电脑操作、产物采纳、修改和测试留在 Codex 本地。
+
+本分支直接建立在上游提交 `56e36c2feeb6705376c1d1dc50dbec52ea43d4f4` 之上；保留的上游基础与本分支新增功能见 [UPSTREAM.md](UPSTREAM.md)。
 
 ```text
 $codex-bridge-chatgpt 诊断这个复杂 Bug，完成修复并在本地验证。
 ```
 
-不需要单独执行 setup 命令，不需要 OpenAI API Key，不运行后台服务。首次任务会先要求用户明确决定是否接受浏览器自动化风险；接受后才进入全自动交接流程。
+不需要 OpenAI API Key，也不运行后台服务。桌面 App 能直接协调普通 Chat 时优先使用该能力；只有退回到可见的 ChatGPT 网页自动化时，首次发送前才要求用户明确接受浏览器风险。
 
 > **Unofficial Experimental（非官方实验功能）：** 自动控制 ChatGPT 网页端存在非零账号风险，可能触发安全机制、临时限制或账号处置。本项目与 OpenAI 无关联，也未获得其认可或授权；不能保证合规、账号安全、模型可用性或 ChatGPT/Codex 额度永久分离。用户明确接受风险前，全自动桥接默认关闭。
 
 ![Codex 桥接 ChatGPT 架构](assets/codex-bridge-chatgpt-architecture.png)
 
 可维护图源：[docs/architecture/codex-bridge-chatgpt-v1.architecture.json](docs/architecture/codex-bridge-chatgpt-v1.architecture.json)。
+
+1.0 版通过不透明会话作用域绑定一个规范化 Chat、一个桥接实例和一个规范工作区。它在本地只读 [v0.9 MCP 与并发](docs/superpowers/specs/2026-09-14-v0.9-mcp-and-concurrency.md) 架构上增加安全状态升级、上下文来源清单、按修订号静默读取、setup 与 Chat 迁移的预览/应用事务、隐私诊断和可复现发布物。决策与源码依据见 [v1.0 设计](docs/superpowers/specs/2026-09-14-v1.0-public-release.md)、[GitHub 同类项目调查](docs/v1.0-github-landscape-2026-09-14.md)和[发布准备记录](docs/v1.0-release-readiness.md)。
+
+脱敏后的[三轮持续上下文真实联调记录](docs/live-e2e-validation.md)给出了 App 适配器、紧凑协议、修复恢复和回执锚定召回证据。
 
 ## 为什么做这个项目
 
@@ -40,7 +46,26 @@ ChatGPT 负责提出方案，Codex 负责验证与执行。
 
 ## 核心功能
 
-- 用户只需要提交一句自然语言任务。
+- 用户只需要提交一句自然语言任务，并在后续轮次持续复用同一个普通 ChatGPT Chat。
+- 每个 Chat 只握手一次 `compact-v1`，之后使用按任务类型裁剪的结果结构和对象增量，避免 JSON 套 JSON。
+- App 发送确认后按幂等键轮询读取，容忍 Chat 的异步送达，同时避免重复发送。
+- 在本地估算请求、回答、协议、重复内容和避免重传的历史 Token，不上传遥测。
+- 提供 `start`、`optimize`、`status`、`resume`、`inspect`、`cost` 六个日常使用与恢复命令。
+- 通过无依赖的本地 STDIO MCP 服务提供状态、健康、预演、租约检查和受限上下文获取。
+- 用不透明 Chat/工作区作用域绑定请求与上下文读取，拒绝跨作用域复用。
+- 记录每项上下文的包含、跳过、脱敏、截断、复用状态，以及本地 Token 估算和哈希。
+- 支持按修订号读取；状态未变化时只返回最小 `unchanged` 结果。
+- setup 和 Chat 迁移都先预览，再应用同一个哈希绑定事务。
+- 使用带所有权校验的独占租约串行化持久写入；陈旧并发写入会明确失败，不会丢失较新的状态。
+- 发送前自动去除空白和重复增量，并阻止超过 3,000 approximate input tokens 的请求。
+- 只有语义内容、工作区指纹和 checkpoint 哈希均未改变时，才复用上一份已验证结果。
+- 可委派规划、长文写作、文件生成、审查和高成本推理。
+- 按步骤路由到 Chat、Codex 或两者，并记录原因、隐私处理与验证等级。
+- 后续轮次只同步增量上下文，不重放完整对话或仓库。
+- 每个增量都绑定上一轮执行回执与 checkpoint 摘要。
+- 用本地 checkpoint 保存可迁移的长期上下文。
+- 工作区变化时自动淘汰过期的文件事实。
+- 文件写入前校验路径、基础哈希、竞态变化和内容哈希。
 - 首次交接前自动运行 Doctor。
 - 任何 ChatGPT 浏览器操作前必须通过版本化风险授权。
 - 检查桌面 App、内置 Browser、ChatGPT 登录和目标模型。
@@ -58,17 +83,21 @@ ChatGPT 负责提出方案，Codex 负责验证与执行。
 
 1. **一句话调用**：用户在真实仓库任务中点名 `$codex-bridge-chatgpt`。
 2. **自动预检**：Doctor 校验 Skill 安装和本地运行时。
-3. **风险决策**：Skill 明确说明非零风险，只在用户完成版本化授权后继续。
-4. **浏览器检查**：Codex 检查桌面环境、内置 Browser、ChatGPT 登录和目标模型。
+3. **绑定 Chat**：校验并保存一个普通 ChatGPT Chat，作为持续上下文的持有者，并记录一次 `compact-v1` 协议确认。
+4. **选择传输**：优先使用 App 级 Chat 协调；发送确认后进行有界读取轮询。浏览器后备路径需要版本化风险授权和预检。
 5. **本地取证**：Codex 读取项目规则、状态、相关代码和测试。
-6. **上下文压缩**：Codex 生成一个有界、脱敏的 Context Packet。
-7. **网页推理**：只激活一次可见发送控件，获取一个结构化方案。
-8. **可见复制**：只使用 ChatGPT 可见的“复制回答”操作；状态不确定立即停止。
+6. **一次准备**：`bridge start` 压缩并校验增量、执行预算闸门；若存在安全的相同结果则直接复用，否则留下唯一一份待发送请求。
+7. **Chat 工作**：持续对话负责规划、写作、审查或推理，并返回结构化结果或文件。
+8. **配对校验**：核对 bridge ID、轮次、结果结构和文件路径。
 9. **本地采纳门**：Codex 独立验证每条建议。
-10. **修改与测试**：Codex 重建实现步骤并运行本地验证。
-11. **回执与完成**：记录脱敏哈希和状态，通过完整闸门后才能宣布完成。
+10. **修改与测试**：Codex 采纳合格产物、重建动作并运行本地验证。
+11. **回执与 checkpoint**：把实际结果同步回同一 Chat，并更新可迁移的本地长期上下文。
 
 ## 工作原理
+
+### 持续上下文
+
+普通 ChatGPT Chat 保存语义历史；项目本地状态保存固定 Chat 标识和单调递增轮次；checkpoint 只保存 Codex 已采纳且本地核验过的决策、约束、开放问题和产物。后续请求以最近一次执行回执为基线，只发送变化。如果必须更换 Chat，checkpoint 就是迁移边界。
 
 ### Context Packet
 
@@ -114,11 +143,11 @@ Result 校验通过不代表获得执行权限。Codex 必须重新打开相关�
 |---|---|
 | macOS ChatGPT 桌面 App + Codex | 目标支持；已完成本地实测 |
 | Windows ChatGPT 桌面 App + Codex | 目标支持；包级闸门由 Windows CI 验证 |
-| Codex CLI | 不具备内置 Browser 桥接 |
-| Codex IDE 扩展 | 不具备内置 Browser 桥接 |
-| Linux | V1 桌面工作流不支持 |
+| Codex CLI | 支持本地 MCP 工具；不具备 App 内 Browser 退路 |
+| Codex IDE 扩展 | 支持本地 MCP 工具；不具备 App 内 Browser 退路 |
+| Linux | 本地逻辑、MCP 和打包由 CI 验证；不具备桌面 Browser 工作流 |
 
-确定性包测试同时覆盖 macOS 和 Windows。完整网页链路仍取决于用户桌面 App 版本实际开放的 Browser 能力。
+确定性包测试覆盖 Linux、macOS 和 Windows。完整网页链路仍取决于用户桌面 App 版本实际开放的 Browser 能力。
 
 ## 安装
 
@@ -152,6 +181,19 @@ Copy-Item -Recurse "codex-bridge-chatgpt\skills\codex-bridge-chatgpt" "$HOME\.co
 
 仓库还包含已校验的 [Codex Plugin manifest](.codex-plugin/plugin.json)。Skill 目录是唯一工作流实现，Plugin 是它的分发外壳。
 
+### 可选本地 MCP 工具
+
+Codex 客户端支持项目级 STDIO MCP 服务。先预览项目配置，检查生成的计划，再应用没有变化的同一份计划：
+
+```bash
+npm run setup -- --workspace . --output bridge-setup-plan.json
+npm run setup -- --apply bridge-setup-plan.json
+```
+
+使用 `--action remove --output bridge-remove-plan.json` 可以预览只移除受管配置区块；运行时上下文会保留。服务只提供 `bridge_status`、`bridge_health`、`bridge_lease_status`、`bridge_dry_run` 和 `bridge_pull_context`，五项均为本地只读工具。手动配置仍见 [docs/codex-mcp-config.example.toml](docs/codex-mcp-config.example.toml)。
+
+MCP 服务不开放端口，也不需要 OAuth、隧道、API Key 或后台守护进程。详见[本地 MCP 说明](skills/codex-bridge-chatgpt/references/local-mcp.md)和 [OpenAI 官方 MCP 文档](https://developers.openai.com/codex/mcp/)。
+
 ## 快速上手
 
 在 Codex 中打开一个仓库，直接发送真实任务：
@@ -174,7 +216,7 @@ $codex-bridge-chatgpt 比较可能的设计，基于证据选择一个，然后�
 
 ## 首次运行 Doctor
 
-用户不需要单独运行 setup。Skill 依次检查安装、持久化风险决策和当前浏览器状态：
+自然语言 Skill 工作流不要求配置 MCP。可选的本地 MCP 使用上面的预览/应用事务。Skill 依次检查安装、持久化风险决策和当前浏览器状态：
 
 | 状态 | 含义 | 恢复方式 |
 |---|---|---|
@@ -199,7 +241,7 @@ node scripts/automation-consent.mjs disable --json
 
 ## 隐私与安全
 
-用户授权后，Skill 通过内置 Browser 的可见控件把一个最小化 Context Packet 发送到 `https://chatgpt.com/`。它不调用 ChatGPT 私有接口，不读取 Cookie、浏览器存储或隐藏认证信息，不要求 API Key，不运行托管服务，也不收集遥测。普通回执默认脱敏，网页输出在 Codex 本地重新验证前始终是不可信数据。
+Skill 只向指定 Chat 发送最小化的任务增量，并优先使用 App 级协调能力。用户授权浏览器后，后备路径才通过内置 Browser 的可见控件访问 `https://chatgpt.com/`。它不调用 ChatGPT 私有接口，不读取 Cookie、浏览器存储或隐藏认证信息，不要求 API Key，不运行托管服务，也不收集遥测。外部输出在 Codex 本地重新验证前始终是不可信数据。
 
 设计上不会主动发送：
 
@@ -224,10 +266,24 @@ node scripts/automation-consent.mjs disable --json
 ```bash
 npm test
 npm run doctor
+npm run doctor:release
 npm run validate
+npm run release:build
+npm run setup -- --workspace . --output bridge-setup-plan.json
+npm run bridge -- status
+npm run bridge -- health
+npm run bridge -- dry-run --spec handoff.json
+npm run bridge -- start --spec handoff.json
+npm run bridge -- optimize --request request.json
+npm run bridge -- questions
+npm run bridge -- recovery-export --output recovery.json
+npm run bridge -- provide-context --request context-query.json --output context-response.json
+npm run bridge -- inspect --round last
+npm run bridge -- cost
+npm run mcp -- --dir .codex/codex-bridge-chatgpt --workspace . --max-tokens 1200
 ```
 
-验证覆盖 Doctor 状态、可移植复制安装、Packet/Result 契约、敏感信息拒绝、哈希绑定、模型证据、隐私字段、完整回执和架构图资源。
+验证覆盖 Doctor 状态、可移植复制安装、Packet/Result 与紧凑协议契约、App 送达恢复、Token 统计、请求优化、绑定状态的结果复用、发送前预演、安全的按需读取/搜索/diff、健康与完整性报告、问题合并、限额恢复导出、敏感信息拒绝、哈希绑定、模型证据、隐私字段、完整回执和架构图资源。
 
 ## 项目结构
 
@@ -240,14 +296,16 @@ npm run validate
 ├── skills/codex-bridge-chatgpt/
 │   ├── SKILL.md                      # 唯一工作流入口
 │   ├── agents/openai.yaml            # Codex 界面元数据
-│   ├── references/                   # 按需加载的工作流契约
-│   └── scripts/                      # Doctor、授权状态与交接校验器
+│   ├── references/                   # 传输、持续上下文与交接契约
+│   └── scripts/                      # Doctor、授权、持久状态与校验器
 └── tests/                            # 单测、契约、可移植性与 E2E 产物
 ```
 
 ## 当前限制
 
-- V0.2 依赖受支持的 ChatGPT 桌面 App，不是通用 CLI 桥接器。
+- V1 的普通 Chat 交接依赖桌面 App 的 Chat 协调能力或受支持的内置 Browser；本地 MCP 仍保持只读。
+- 持续上下文仍依赖 ChatGPT 对话保留；当对话不可用时，本地 checkpoint 是恢复边界。
+- App 的发送确认是异步队列确认。桥接按幂等键轮询固定 Chat；送达状态未决时保留可恢复轮次，不重复发送。
 - 登录、CAPTCHA、双因素认证、权限和模型选择仍由用户完成。
 - 可见模型 UI 是可审计证据，不是远端模型的密码学证明。
 - ChatGPT 页面变化可能让可见发送或复制控件无法确认；Skill 不进行 DOM 回答提取或自动重试，而是直接停止。

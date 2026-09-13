@@ -1,0 +1,21 @@
+# Copy this table into the trusted project's .codex/config.toml and replace both placeholders.
+# The project root must contain .codex/codex-bridge-chatgpt/state.json.
+
+[mcp_servers.codex_bridge_chatgpt]
+command = "node"
+args = [
+  "<ABSOLUTE_PACKAGE_PATH>/skills/codex-bridge-chatgpt/scripts/mcp-server.mjs",
+  "--dir", ".codex/codex-bridge-chatgpt",
+  "--workspace", ".",
+  "--max-tokens", "1200"
+]
+cwd = "<ABSOLUTE_PROJECT_ROOT>"
+enabled = true
+required = false
+enabled_tools = ["bridge_status", "bridge_health", "bridge_lease_status", "bridge_dry_run", "bridge_pull_context"]
+default_tools_approval_mode = "auto"
+startup_timeout_sec = 10
+tool_timeout_sec = 60
+
+[mcp_servers.codex_bridge_chatgpt.tools.bridge_pull_context]
+output_token_limit = 3000

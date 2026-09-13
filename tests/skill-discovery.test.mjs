@@ -14,16 +14,16 @@ test('publishes the Codex bridge skill under its portable package identity', asy
   assert.equal(name, 'codex-bridge-chatgpt');
 
   const interfaceYaml = await readFile(join(skillRoot, 'agents/openai.yaml'), 'utf8');
-  assert.match(interfaceYaml, /^\s*display_name:\s*"Codex 桥接 ChatGPT"$/m);
+  assert.match(interfaceYaml, /^\s*display_name:\s*"Codex 持续桥接 ChatGPT"$/m);
   assert.match(interfaceYaml, /\$codex-bridge-chatgpt/);
 });
 
-test('keeps v0.2.0 release metadata aligned', async () => {
+test('keeps v1.0.0 release metadata aligned', async () => {
   const packageJson = JSON.parse(await readFile(join(repoRoot, 'package.json'), 'utf8'));
   const pluginJson = JSON.parse(await readFile(join(repoRoot, '.codex-plugin', 'plugin.json'), 'utf8'));
   const version = (await readFile(join(repoRoot, 'VERSION'), 'utf8')).trim();
 
-  assert.equal(packageJson.version, '0.2.0');
-  assert.equal(pluginJson.version, '0.2.0');
-  assert.equal(version, '0.2.0');
+  assert.equal(packageJson.version, '1.0.0');
+  assert.equal(pluginJson.version, '1.0.0');
+  assert.equal(version, '1.0.0');
 });

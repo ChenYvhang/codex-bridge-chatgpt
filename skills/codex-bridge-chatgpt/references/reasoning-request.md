@@ -31,4 +31,4 @@ packet_id: <same id>
 END_REASONING_RESULT
 ```
 
-If the response is invalid, send one repair turn containing the validator errors and request the complete contract again. Stop after the second invalid response.
+With direct app-level Chat coordination, one repair turn may contain only the validator errors and request the complete contract again; stop after a second invalid response. The visible browser fallback remains one-send and one-copy per round, so an invalid browser result aborts that round without repair or retry.

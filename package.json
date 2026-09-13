@@ -1,14 +1,19 @@
 {
   "name": "codex-bridge-chatgpt",
-  "version": "0.2.0",
+  "version": "1.0.0",
   "private": true,
   "type": "module",
-  "description": "Open-source Codex Skill and Plugin for verified ChatGPT reasoning handoffs.",
+  "description": "Persistent, verified context and artifact handoffs between Codex and an ordinary ChatGPT Chat.",
   "license": "MIT",
   "scripts": {
     "test": "node --test",
     "doctor": "node skills/codex-bridge-chatgpt/scripts/doctor.mjs --json",
-    "validate": "node scripts/verify.mjs"
+    "doctor:release": "node skills/codex-bridge-chatgpt/scripts/doctor.mjs --release --json",
+    "validate": "node scripts/verify.mjs",
+    "bridge": "node skills/codex-bridge-chatgpt/scripts/bridge.mjs",
+    "mcp": "node skills/codex-bridge-chatgpt/scripts/mcp-server.mjs",
+    "setup": "node skills/codex-bridge-chatgpt/scripts/setup.mjs",
+    "release:build": "node scripts/build-release.mjs --check-reproducible"
   },
   "engines": {
     "node": ">=18"
