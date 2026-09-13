@@ -9,7 +9,7 @@
 
 Codex 登录与内置 Browser 中的 ChatGPT 登录是两个独立状态。Skill 不读取或迁移普通浏览器的 Cookie。
 
-全自动网页桥接是 Unofficial Experimental 功能，存在非零账号和策略风险。首次使用时，Skill 会先展示完整说明；用户明确接受前不会打开或控制 ChatGPT。该授权不代表 OpenAI 认可，也不能保证账号安全或额度永久分离。
+网页后备路径是 Unofficial Experimental 功能，存在非零账号和策略风险。仅当 App 无法直接协调普通 Chat，且需要网页自动化时，Skill 才会展示完整说明；用户明确接受前不会打开或控制 ChatGPT 网页端。该授权不代表 OpenAI 认可，也不能保证账号安全或额度永久分离。
 
 ## 推荐安装
 
@@ -29,14 +29,16 @@ $skill-installer Install codex-bridge-chatgpt from https://github.com/ChenYvhang
 $codex-bridge-chatgpt 分析这个仓库问题并给出经过本地测试的修复
 ```
 
-Skill 会自动运行 Doctor。首次会先返回 `NEEDS_AUTOMATION_CONSENT`；明确接受后才检查 Browser、登录和模型。只有对应层返回 `READY` 才会继续。
+Skill 会自动运行 Doctor，并优先检查能否通过 App 直接协调同一个普通 Chat。只有退回网页路径时才检查浏览器自动化授权；若返回 `NEEDS_AUTOMATION_CONSENT`，明确接受后才检查 Browser、登录和模型。各层就绪后会继续原任务。
 
-如果需要本地只读 MCP 工具，先生成并检查项目级配置计划，再应用同一份计划：
+如果需要本地只读 MCP 工具，先克隆本仓库，在**克隆仓库根目录**生成并检查目标项目的配置计划，再应用同一份计划：
 
 ```bash
-npm run setup -- --workspace . --output bridge-setup-plan.json
+npm run setup -- --workspace /path/to/your/project --output bridge-setup-plan.json
 npm run setup -- --apply bridge-setup-plan.json
 ```
+
+在 Windows 上，将示例项目路径换成实际工作区绝对路径。使用 MCP 期间请保留这个克隆仓库，因为生成的配置指向其中的本地服务脚本。
 
 这一步只管理 `.codex/config.toml` 中带标记的区块，不是使用自然语言 Skill 的前置条件。发布包维护者还应运行 `npm run doctor:release` 和 `npm run release:build`；后者会验证两次构建字节一致。
 
