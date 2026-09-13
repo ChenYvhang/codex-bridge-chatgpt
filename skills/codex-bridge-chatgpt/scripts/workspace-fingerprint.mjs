@@ -1,10 +1,10 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { createHash } from 'node:crypto';
 import { realpath } from 'node:fs/promises';
 import { spawnSync } from 'node:child_process';
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 export function sha256(value) {
   return createHash('sha256').update(value, 'utf8').digest('hex');
@@ -62,4 +62,4 @@ async function main() {
   console.log(JSON.stringify(await workspaceFingerprint(root, label), null, 2));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
+if (isDirectExecution(import.meta.url)) await main();

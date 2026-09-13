@@ -13,6 +13,7 @@
 - Expanded the v1.0 test and verification gates for scope tampering, v2 upgrades, migration transactions, setup conflicts, diagnostic privacy, quiet polling, reproducible packaging, and clean extracted installs.
 - Final review blocked symbolic-link escapes in mediated search and artifact writes, bound applied artifacts to their reviewed content and metadata, and confined setup and release inputs to their intended project paths.
 - Queue STDIO MCP input lines before asynchronous dispatch and wait for each response to flush, so short-lived clients receive complete JSON on macOS.
+- Resolve executable and module paths before the CLI entry check, including macOS `/var` aliases and linked package directories; Doctor now verifies the shared entry helper.
 
 ## 0.9.0 - 2026-09-14
 

@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 const PACKET_SECTIONS = [
   '## Objective',
@@ -327,6 +327,6 @@ async function main() {
   console.log(`OK: valid ${mode}${suffix}`);
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isDirectExecution(import.meta.url)) {
   await main();
 }

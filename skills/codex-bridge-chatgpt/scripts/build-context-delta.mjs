@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { createHash } from 'node:crypto';
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 
 function canonical(value) {
   if (Array.isArray(value)) return value.map(canonical);
@@ -66,4 +66,4 @@ async function main() {
   console.log(JSON.stringify(buildContextDelta(input), null, 2));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });
+if (isDirectExecution(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });

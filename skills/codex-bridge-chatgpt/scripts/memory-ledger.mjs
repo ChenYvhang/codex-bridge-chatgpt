@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { createHash } from 'node:crypto';
 import { readFile, writeFile } from 'node:fs/promises';
 import { isAbsolute, resolve, relative } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { workspaceFingerprint, compareWorkspaceFingerprints } from './workspace-fingerprint.mjs';
 
 function sha256(buffer) {
@@ -70,7 +70,7 @@ async function main() {
   console.log(JSON.stringify({ status: 'refreshed', output: resolve(outputPath) }, null, 2));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isDirectExecution(import.meta.url)) {
   main().catch((error) => {
     console.error(`ERROR: ${error.message}`);
     process.exitCode = 1;

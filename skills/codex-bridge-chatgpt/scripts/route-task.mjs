@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 
 const LEVELS = new Set(['low', 'medium', 'high']);
 const SENSITIVITY = new Set(['public', 'project', 'sensitive', 'secret']);
@@ -70,7 +70,7 @@ async function main() {
   if (result.status === 'invalid') process.exitCode = 1;
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isDirectExecution(import.meta.url)) {
   main().catch((error) => {
     console.error(`ERROR: ${error.message}`);
     process.exitCode = 1;

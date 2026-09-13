@@ -1,8 +1,8 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { readFile } from 'node:fs/promises';
 import { isAbsolute, normalize } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 export const CONTEXT_SCHEMA_VERSION = 2;
 export const COMPACT_PROTOCOL = 'compact-v1';
@@ -285,4 +285,4 @@ async function main() {
   }
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) await main();
+if (isDirectExecution(import.meta.url)) await main();

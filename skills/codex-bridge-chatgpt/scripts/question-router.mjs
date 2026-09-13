@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 
 const USER_TYPES = new Set(['product_intent', 'preference', 'credential', 'policy', 'external_side_effect']);
 
@@ -73,4 +73,4 @@ async function main() {
   console.log(JSON.stringify(batch ? batchQuestions(input.questions, input.available_evidence) : routeQuestions(input.questions, input.available_evidence), null, 2));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });
+if (isDirectExecution(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });

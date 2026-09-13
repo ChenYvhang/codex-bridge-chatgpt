@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { createInterface } from 'node:readline';
-import { fileURLToPath } from 'node:url';
 import { resolve } from 'node:path';
 import { DEFAULT_STATE_DIRECTORY, loadState } from './context-state.mjs';
 import { dryRunFromValue, healthReport, prepareContextResponseValue, statusView } from './bridge.mjs';
@@ -185,4 +185,4 @@ async function main() {
   await runStdioServer({ directory: options.dir ?? DEFAULT_STATE_DIRECTORY, workspaceRoot: options.workspace ?? process.cwd(), defaultMaxTokens: Number(options['max-tokens'] ?? 1200) });
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });
+if (isDirectExecution(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });

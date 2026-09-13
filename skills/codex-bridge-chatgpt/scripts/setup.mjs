@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { createHash, randomUUID } from 'node:crypto';
 import { lstat, mkdir, readFile, realpath, rename, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
@@ -169,4 +170,4 @@ async function main() {
   }
 }
 
-if (process.argv[1] === currentFile) await main();
+if (isDirectExecution(import.meta.url)) await main();

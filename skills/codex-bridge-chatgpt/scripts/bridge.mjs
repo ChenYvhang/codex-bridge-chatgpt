@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { createHash } from 'node:crypto';
 import { mkdir, readFile, readdir, writeFile } from 'node:fs/promises';
 import { dirname, join, resolve } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import { abortRound, beginRound, DEFAULT_STATE_DIRECTORY, loadState, prepareRound, resumeAppPolling, resumeBridge, statePaths } from './context-state.mjs';
 import { buildCompactRequest } from './build-context-delta.mjs';
 import { compactContextDelta, optimizeRequest, requestSemanticKey, reusableExchange } from './request-optimizer.mjs';
@@ -400,4 +400,4 @@ async function main() {
   console.log(options.json === 'true' ? JSON.stringify(result, null, 2) : human(command, result));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });
+if (isDirectExecution(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });

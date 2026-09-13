@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { readFile } from 'node:fs/promises';
-import { fileURLToPath } from 'node:url';
 
 const RESPONSE_BUDGETS = {
   plan: 1200,
@@ -105,4 +105,4 @@ async function main() {
   console.log(JSON.stringify(analyzePayload(input), null, 2));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });
+if (isDirectExecution(import.meta.url)) main().catch((error) => { console.error(`ERROR: ${error.message}`); process.exitCode = 1; });

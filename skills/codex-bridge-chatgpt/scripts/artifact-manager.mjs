@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
+import { isDirectExecution } from './cli-entry.mjs';
 import { createHash } from 'node:crypto';
 import { lstat, mkdir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
-import { fileURLToPath } from 'node:url';
 
 const PROTECTED_ROOTS = new Set(['.git', '.codex', 'node_modules']);
 const PROTECTED_NAMES = new Set(['.env', '.npmrc', '.pypirc', 'credentials', 'credentials.json']);
@@ -157,7 +157,7 @@ async function main() {
   console.log(JSON.stringify({ status: 'applied', plans, applied }, null, 2));
 }
 
-if (process.argv[1] === fileURLToPath(import.meta.url)) {
+if (isDirectExecution(import.meta.url)) {
   main().catch((error) => {
     console.error(`ERROR: ${error.message}`);
     process.exitCode = 1;

@@ -15,6 +15,7 @@ const requiredFiles = [
   ['skill', 'SKILL.md'],
   ['interface', 'agents/openai.yaml'],
   ['validator', 'scripts/validate-handoff.mjs'],
+  ['cli_entry', 'scripts/cli-entry.mjs'],
   ['automation_consent', 'scripts/automation-consent.mjs'],
   ['context_state', 'scripts/context-state.mjs'],
   ['context_validator', 'scripts/validate-context.mjs'],

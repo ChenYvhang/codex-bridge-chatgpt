@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import { spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { mkdir, mkdtemp, readFile, rm, writeFile } from 'node:fs/promises';
+import { mkdir, mkdtemp, readFile, rm, symlink, writeFile } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import test from 'node:test';
@@ -67,13 +67,19 @@ test('the extracted release runs Doctor without repository-local dependencies', 
     assert.equal(run.status, 0, run.stderr || run.stdout);
     assert.equal(JSON.parse(run.stdout).status, 'READY');
     const mcp = join(packageRoot, 'skills', 'codex-bridge-chatgpt', 'scripts', 'mcp-server.mjs');
+    const linkedPackage = join(root, 'linked-package');
+    let mcpEntry = mcp;
+    try {
+      await symlink(packageRoot, linkedPackage, process.platform === 'win32' ? 'junction' : 'dir');
+      mcpEntry = join(linkedPackage, 'skills', 'codex-bridge-chatgpt', 'scripts', 'mcp-server.mjs');
+    } catch (error) { if (!['EPERM', 'EACCES', 'ENOTSUP'].includes(error?.code)) throw error; }
     const input = [
       { jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-06-18' } },
       { jsonrpc: '2.0', method: 'notifications/initialized' },
       { jsonrpc: '2.0', id: 2, method: 'tools/list' },
       { jsonrpc: '2.0', id: 3, method: 'tools/call', params: { name: 'bridge_lease_status', arguments: {} } },
     ].map((message) => JSON.stringify(message)).join('\n') + '\n';
-    const smoke = spawnSync(process.execPath, [mcp, '--dir', join(root, 'empty-runtime'), '--workspace', packageRoot], { cwd: packageRoot, input, encoding: 'utf8', timeout: 10000 });
+    const smoke = spawnSync(process.execPath, [mcpEntry, '--dir', join(root, 'empty-runtime'), '--workspace', packageRoot], { cwd: packageRoot, input, encoding: 'utf8', timeout: 10000 });
     assert.equal(smoke.status, 0, smoke.stderr || smoke.stdout);
     assert.ok(smoke.stdout.trim(), 'MCP produced no JSON-RPC response');
     const outputLines = smoke.stdout.trim().split(/\r?\n/);
