@@ -162,7 +162,9 @@ export async function runStdioServer({ input = process.stdin, output = process.s
     if (!line.trim()) continue;
     let response;
     try { response = await dispatch(JSON.parse(line)); } catch { response = rpcError(null, -32700, 'Parse error'); }
-    if (response) output.write(`${JSON.stringify(response)}\n`);
+    if (response) await new Promise((resolveWrite, rejectWrite) => {
+      output.write(`${JSON.stringify(response)}\n`, (error) => error ? rejectWrite(error) : resolveWrite());
+    });
   }
 }
 
