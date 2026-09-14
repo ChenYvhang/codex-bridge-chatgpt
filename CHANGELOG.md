@@ -14,6 +14,9 @@
 - Final review blocked symbolic-link escapes in mediated search and artifact writes, bound applied artifacts to their reviewed content and metadata, and confined setup and release inputs to their intended project paths.
 - Queue STDIO MCP input lines before asynchronous dispatch and wait for each response to flush, so short-lived clients receive complete JSON on macOS.
 - Resolve executable and module paths before the CLI entry check, including macOS `/var` aliases and linked package directories; Doctor now verifies the shared entry helper.
+- Hardened the same 1.0.0 source against nested protected paths, duplicate artifact ids/targets, non-UTF-8 inline artifacts, and partial application caused by a stale later file in the batch.
+- Made mediated context pulls fail closed when ignore rules cannot be read and return fixed error codes instead of local filesystem paths; malformed Chat URLs can no longer fall back to a raw credential-bearing reference.
+- Kept lease acquisition failures from deleting another writer's lock; cleanup now requires ownership of the newly created lock.
 
 ## 0.9.0 - 2026-09-14
 

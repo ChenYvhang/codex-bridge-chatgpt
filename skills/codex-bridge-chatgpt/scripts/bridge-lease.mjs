@@ -85,8 +85,10 @@ export async function acquireBridgeLease({ directory, operation, timeoutMs = 500
       acquired_at: acquiredAt,
       heartbeat_at: acquiredAt,
     };
+    let createdLock = false;
     try {
       await mkdir(paths.lock, { recursive: false, mode: 0o700 });
+      createdLock = true;
       await writeOwner(paths, owner, 'wx');
       await writeFile(paths.heartbeat, '', { flag: 'wx', mode: 0o600 });
       let released = false;
@@ -119,10 +121,16 @@ export async function acquireBridgeLease({ directory, operation, timeoutMs = 500
         },
       };
     } catch (error) {
-      if (error?.code !== 'EEXIST') {
-        try { await rm(paths.lock, { recursive: true, force: true }); } catch { /* retain original error */ }
+      if (createdLock) {
+        const current = await readOwner(paths);
+        if (current?.lease_id === owner.lease_id) {
+          const quarantine = `${paths.lock}.failed-${owner.lease_id}`;
+          try { await rename(paths.lock, quarantine); await rm(quarantine, { recursive: true, force: true }); }
+          catch { /* retain original acquisition error */ }
+        }
         throw error;
       }
+      if (error?.code !== 'EEXIST') throw error;
       if (await reclaimIfStale(paths, staleMs)) continue;
       if (Date.now() >= deadline) {
         const current = await readOwner(paths);

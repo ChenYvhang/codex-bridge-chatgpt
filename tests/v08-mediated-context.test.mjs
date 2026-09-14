@@ -47,6 +47,37 @@ test('secure reader blocks traversal, sensitive paths, and custom ignore rules',
   } finally { await rm(parent, { recursive: true, force: true }); }
 });
 
+test('secure reader denies nested metadata and credential paths', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bridge-v08-nested-deny-'));
+  try {
+    await mkdir(join(root, 'nested', '.git'), { recursive: true });
+    await mkdir(join(root, 'nested', '.codex'), { recursive: true });
+    await writeFile(join(root, 'nested', '.git', 'config'), 'metadata marker', 'utf8');
+    await writeFile(join(root, 'nested', '.codex', 'state.json'), 'state marker', 'utf8');
+    await writeFile(join(root, 'nested', 'credentials'), 'credential marker', 'utf8');
+    const reader = await SecureContextReader.open(root);
+    await assert.rejects(reader.readText('nested/.git/config'), /ACCESS_DENIED/);
+    await assert.rejects(reader.readText('nested/.codex/state.json'), /ACCESS_DENIED/);
+    await assert.rejects(reader.readText('nested/credentials'), /ACCESS_DENIED/);
+    assert.deepEqual((await reader.search('marker')).matches, []);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
+test('context errors hide local paths and unreadable ignore rules fail closed', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'bridge-v08-error-privacy-'));
+  try {
+    const reader = await SecureContextReader.open(root);
+    const prepared = await executeContextQuery({
+      query: { schema_version: 1, bridge_id: 'b', conversation_scope_id: 'a'.repeat(64), round: 1, request_id: 'missing-1', requests: [{ id: 'missing', kind: 'read_file', path: 'not-here.txt' }] },
+      reader,
+    });
+    assert.equal(prepared.response.items[0].error, 'NOT_FOUND');
+    assert.equal(JSON.stringify(prepared.response).includes(root), false);
+    await mkdir(join(root, '.codexbridgeignore'));
+    await assert.rejects(SecureContextReader.open(root), /IGNORE_FILE_UNAVAILABLE/);
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test('directory search does not follow a link outside the workspace', async (t) => {
   const parent = await mkdtemp(join(tmpdir(), 'bridge-v08-search-link-'));
   const root = join(parent, 'workspace');
@@ -99,17 +130,21 @@ test('git diff excludes sensitive paths before returning content', async () => {
     execFileSync('git', ['init'], { cwd: root, stdio: 'ignore' });
     execFileSync('git', ['config', 'user.email', 'test@example.invalid'], { cwd: root });
     execFileSync('git', ['config', 'user.name', 'Bridge Test'], { cwd: root });
+    await mkdir(join(root, 'nested', '.codex'), { recursive: true });
     await writeFile(join(root, '.env'), 'HIDDEN=before\n', 'utf8');
+    await writeFile(join(root, 'nested', '.codex', 'state.txt'), 'PRIVATE_STATE=before\n', 'utf8');
     await writeFile(join(root, 'safe.txt'), 'safe before\n', 'utf8');
     execFileSync('git', ['add', '.'], { cwd: root });
     execFileSync('git', ['commit', '-m', 'base'], { cwd: root, stdio: 'ignore' });
     await writeFile(join(root, '.env'), 'HIDDEN=after\n', 'utf8');
+    await writeFile(join(root, 'nested', '.codex', 'state.txt'), 'PRIVATE_STATE=after\n', 'utf8');
     await writeFile(join(root, 'safe.txt'), 'safe after\n', 'utf8');
     const reader = await SecureContextReader.open(root);
     const result = await reader.gitDiff({ mode: 'unstaged' });
     assert.match(result.content, /safe after/);
     assert.equal(result.content.includes('.env'), false);
     assert.equal(result.content.includes('HIDDEN'), false);
+    assert.equal(result.content.includes('PRIVATE_STATE'), false);
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 

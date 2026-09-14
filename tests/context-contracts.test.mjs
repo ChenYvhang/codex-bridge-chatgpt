@@ -64,11 +64,25 @@ test('requires a result to echo the request conversation scope', () => {
 });
 
 test('rejects traversal, drive-relative, and protected artifact paths', () => {
-  for (const path of ['../outside.txt', 'C:outside.txt', '.git/config', '.codex/bridge.json', 'node_modules/x', '.']) {
+  for (const path of ['../outside.txt', 'C:outside.txt', '.git/config', 'docs/.git/config', 'docs\\..\\.git\\config', '.codex/bridge.json', 'nested/.codex/state.json', 'node_modules/x', 'docs/.env.production', 'docs/credentials', 'docs/private.pem', '.']) {
     const candidate = structuredClone(result);
     candidate.artifacts[0].path = path;
     assert.match(validateContextResult(candidate).join('\n'), /path is unsafe/);
   }
+});
+
+test('rejects non-UTF-8 and ambiguous artifact batches before adoption', () => {
+  const nonUtf8 = structuredClone(result);
+  nonUtf8.artifacts[0].encoding = 'utf16le';
+  assert.match(validateContextResult(nonUtf8).join('\n'), /encoding must be utf8/);
+
+  const duplicateId = structuredClone(result);
+  duplicateId.artifacts.push({ ...duplicateId.artifacts[0], path: 'docs/second.md' });
+  assert.match(validateContextResult(duplicateId).join('\n'), /artifact_id is duplicated/);
+
+  const duplicatePath = structuredClone(result);
+  duplicatePath.artifacts.push({ ...duplicatePath.artifacts[0], artifact_id: 'artifact-2', path: 'docs/./design.md' });
+  assert.match(validateContextResult(duplicatePath).join('\n'), /path is duplicated/);
 });
 
 test('rejects likely credentials in persistent context', () => {

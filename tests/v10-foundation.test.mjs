@@ -182,6 +182,11 @@ test('MCP status and health support unchanged revision responses', async () => {
 test('chat reference normalization removes credentials and unstable URL parts', () => {
   assert.equal(normalizeChatReference('https://user:pass@example.com/path/?token=secret#x'), 'https://example.com/path');
   assert.equal(normalizeChatReference(' thread-id '), 'thread-id');
+  assert.equal(normalizeChatReference('https://user:pass@chatgpt.com/c/abc-123?token=secret'), 'chatgpt:c:abc-123');
+  assert.throws(() => normalizeChatReference('https://user:pass@chatgpt.com/c/%ZZ?token=secret'), /invalid identifier/);
+  assert.throws(() => normalizeChatReference('https://user:pass@chatgpt.com:invalid/c/abc-123'), /URL is invalid/);
+  assert.throws(() => normalizeChatReference('https://chatgpt.com/c/abc-123/other'), /secure conversation URL/);
+  assert.throws(() => normalizeChatReference('http://chatgpt.com/c/abc-123'), /secure conversation URL/);
 });
 
 test('project setup is previewed, hash-bound, repeatable, and removable', async () => {

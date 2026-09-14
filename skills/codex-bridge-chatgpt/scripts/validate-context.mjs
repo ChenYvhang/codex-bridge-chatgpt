@@ -47,10 +47,16 @@ function validateIdentity(value, errors, { allowLegacy = true } = {}) {
 
 export function safeWorkspacePath(path) {
   if (!hasText(path) || isAbsolute(path)) return false;
-  const candidate = normalize(path).replaceAll('\\', '/');
-  if (candidate === '.' || candidate === '..' || candidate.startsWith('../')) return false;
+  const candidate = normalize(path.replaceAll('\\', '/')).replaceAll('\\', '/');
+  if (isAbsolute(candidate) || candidate === '.' || candidate === '..' || candidate.startsWith('../')) return false;
   if (/^[a-z]:/i.test(candidate) || candidate.includes('\0')) return false;
-  return !['.git', '.codex', 'node_modules'].includes(candidate.split('/')[0].toLowerCase());
+  const segments = candidate.split('/').map((part) => part.toLowerCase());
+  if (segments.some((part) => ['.git', '.codex', 'node_modules', '.ssh', '.aws', '.gnupg'].includes(part))) return false;
+  if (segments.some((part) => /^\.env(?:\.|$)/.test(part))) return false;
+  const basename = segments.at(-1);
+  return !['.npmrc', '.pypirc', '.netrc', '_netrc', '.git-credentials', 'credentials', 'credentials.json'].includes(basename)
+    && !/^(?:id_rsa|id_ed25519|id_ecdsa|id_dsa)(?:\.|$)/.test(basename)
+    && !/\.(?:pem|key|p12|pfx|jks|keystore)$/.test(basename);
 }
 
 function validateWorkspace(workspace, errors, prefix = 'workspace', requireRoot = true) {
@@ -135,7 +141,7 @@ function validateCompactResult(value, errors) {
   if (value.profile === 'diagnosis' && !isStringArray(value.hypotheses)) errors.push('hypotheses must be an array of strings for diagnosis');
   if (value.profile === 'artifact') {
     if (!Array.isArray(value.artifacts)) errors.push('artifacts must be an array for artifact');
-    else value.artifacts.forEach((entry, index) => validateArtifact(entry, errors, index));
+    else validateArtifactCollection(value.artifacts, errors, 'artifacts');
     if (!isStringArray(value.instructions_for_codex)) errors.push('instructions_for_codex must be an array of strings for artifact');
   }
 }
@@ -157,11 +163,29 @@ function validateArtifact(entry, errors, index, legacy = false) {
   if (entry.delivery === 'attachment' && !hasText(entry.attachment_name)) errors.push(`${prefix}.attachment_name is required for attachment delivery`);
   if (!legacy) {
     if (!hasText(entry.media_type)) errors.push(`${prefix}.media_type must be non-empty`);
-    if (!hasText(entry.encoding)) errors.push(`${prefix}.encoding must be non-empty`);
+    if (entry.encoding !== 'utf8') errors.push(`${prefix}.encoding must be utf8`);
     if (['replace', 'merge'].includes(operation) && entry.base_sha256 !== null && !isSha(entry.base_sha256)) errors.push(`${prefix}.base_sha256 is invalid`);
     if (entry.declared_sha256 !== null && entry.declared_sha256 !== undefined && !isSha(entry.declared_sha256)) errors.push(`${prefix}.declared_sha256 is invalid`);
     if (!Number.isInteger(entry.size) || entry.size < 0) errors.push(`${prefix}.size is invalid`);
   }
+}
+
+function validateArtifactCollection(artifacts, errors, field, legacy = false) {
+  const ids = new Set();
+  const paths = new Set();
+  artifacts.forEach((entry, index) => {
+    validateArtifact(entry, errors, index, legacy);
+    if (!isObject(entry)) return;
+    if (!legacy && hasText(entry.artifact_id)) {
+      if (ids.has(entry.artifact_id)) errors.push(`${field}[${index}].artifact_id is duplicated`);
+      ids.add(entry.artifact_id);
+    }
+    if (safeWorkspacePath(entry.path)) {
+      const path = normalize(entry.path.replaceAll('\\', '/')).replaceAll('\\', '/').toLowerCase();
+      if (paths.has(path)) errors.push(`${field}[${index}].path is duplicated`);
+      paths.add(path);
+    }
+  });
 }
 
 export function validateContextResult(value) {
@@ -179,7 +203,7 @@ export function validateContextResult(value) {
   const artifacts = value?.schema_version === 1 ? value?.files : value?.artifacts;
   const field = value?.schema_version === 1 ? 'files' : 'artifacts';
   if (!Array.isArray(artifacts)) errors.push(`${field} must be an array`);
-  else artifacts.forEach((entry, index) => validateArtifact(entry, errors, index, value.schema_version === 1));
+  else validateArtifactCollection(artifacts, errors, field, value.schema_version === 1);
   for (const name of ['instructions_for_codex', 'questions']) if (!isStringArray(value?.[name])) errors.push(`${name} must be an array of strings`);
   const update = value?.context_update;
   if (!isObject(update)) errors.push('context_update must be an object');

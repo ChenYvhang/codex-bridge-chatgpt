@@ -115,6 +115,26 @@ test('artifact application refuses content changed after planning', async () => 
   } finally { await rm(root, { recursive: true, force: true }); }
 });
 
+test('artifact batches reject duplicate targets and preflight every file before writing', async () => {
+  const root = await mkdtemp(join(tmpdir(), 'codex-bridge-artifact-batch-'));
+  try {
+    const first = { artifact_id: 'first', path: 'docs/first.md', operation: 'create', delivery: 'inline', content: 'first', encoding: 'utf8' };
+    const second = { artifact_id: 'second', path: 'docs/second.md', operation: 'create', delivery: 'inline', content: 'second', encoding: 'utf8' };
+    const duplicate = await planArtifacts([first, { ...second, path: 'docs/./first.md' }], root);
+    assert.deepEqual(duplicate.map((plan) => plan.status), ['conflict', 'conflict']);
+    assert.deepEqual(await applyReadyArtifacts([first, { ...second, path: 'docs/./first.md' }], duplicate, root), []);
+
+    const plans = await planArtifacts([first, second], root);
+    await mkdir(join(root, 'docs'), { recursive: true });
+    await writeFile(join(root, 'docs', 'second.md'), 'changed after plan', 'utf8');
+    await assert.rejects(applyReadyArtifacts([first, second], plans, root), /target changed after planning/);
+    await assert.rejects(readFile(join(root, 'docs', 'first.md'), 'utf8'), /ENOENT/);
+
+    const wrongEncoding = await planArtifacts([{ ...first, path: 'docs/utf16.md', encoding: 'utf16le' }], root);
+    assert.equal(wrongEncoding[0].status, 'invalid');
+  } finally { await rm(root, { recursive: true, force: true }); }
+});
+
 test('artifact planning refuses a linked directory outside the workspace', async (t) => {
   const parent = await mkdtemp(join(tmpdir(), 'codex-bridge-artifact-link-'));
   const root = join(parent, 'workspace');

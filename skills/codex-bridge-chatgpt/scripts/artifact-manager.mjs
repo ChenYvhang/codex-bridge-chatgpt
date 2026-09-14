@@ -4,9 +4,8 @@ import { isDirectExecution } from './cli-entry.mjs';
 import { createHash } from 'node:crypto';
 import { lstat, mkdir, readFile, realpath, rename, rm, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, join, normalize, relative, resolve, sep } from 'node:path';
+import { safeWorkspacePath } from './validate-context.mjs';
 
-const PROTECTED_ROOTS = new Set(['.git', '.codex', 'node_modules']);
-const PROTECTED_NAMES = new Set(['.env', '.npmrc', '.pypirc', 'credentials', 'credentials.json']);
 
 export function hashContent(content) {
   return createHash('sha256').update(content).digest('hex');
@@ -16,10 +15,8 @@ export function resolveArtifactPath(workspaceRoot, artifactPath) {
   if (typeof artifactPath !== 'string' || !artifactPath.trim() || isAbsolute(artifactPath) || /^[a-z]:/i.test(artifactPath)) {
     throw new Error('artifact path must be workspace-relative');
   }
-  const normalized = normalize(artifactPath).replaceAll('\\', '/');
-  const first = normalized.split('/')[0].toLowerCase();
-  const basename = normalized.split('/').at(-1).toLowerCase();
-  if (normalized === '.' || normalized === '..' || normalized.startsWith('../') || PROTECTED_ROOTS.has(first) || PROTECTED_NAMES.has(basename) || first === '.ssh') {
+  const normalized = normalize(artifactPath.replaceAll('\\', '/')).replaceAll('\\', '/');
+  if (!safeWorkspacePath(artifactPath)) {
     throw new Error('artifact path is outside the allowed workspace surface');
   }
   const root = resolve(workspaceRoot);
@@ -74,10 +71,13 @@ export async function planArtifacts(artifacts, workspaceRoot, maximumBytes = 2_0
       } else if (typeof artifact.content !== 'string') {
         status = 'invalid';
         reason = 'inline artifact requires content';
-      } else if (Buffer.byteLength(artifact.content, artifact.encoding ?? 'utf8') > maximumBytes) {
+      } else if (artifact.encoding !== undefined && artifact.encoding !== 'utf8') {
+        status = 'invalid';
+        reason = 'inline artifact encoding must be utf8';
+      } else if (Buffer.byteLength(artifact.content, 'utf8') > maximumBytes) {
         status = 'invalid';
         reason = 'inline artifact exceeds configured size limit';
-      } else if (Number.isInteger(artifact.size) && artifact.size !== Buffer.byteLength(artifact.content, artifact.encoding ?? 'utf8')) {
+      } else if (Number.isInteger(artifact.size) && artifact.size !== Buffer.byteLength(artifact.content, 'utf8')) {
         status = 'invalid';
         reason = 'declared artifact size mismatch';
       } else if (artifact.operation === 'create' && currentSha256 !== null) {
@@ -105,28 +105,58 @@ export async function planArtifacts(artifacts, workspaceRoot, maximumBytes = 2_0
       plans.push({ artifact_id: artifact?.artifact_id ?? null, path: artifact?.path ?? null, status: 'invalid', reason: error.message });
     }
   }
+  const ids = new Map();
+  const targets = new Map();
+  for (const plan of plans) {
+    for (const [key, groups, reason] of [
+      [plan.artifact_id, ids, 'duplicate artifact id'],
+      [plan.target?.toLowerCase(), targets, 'duplicate artifact target'],
+    ]) {
+      if (!key) continue;
+      const earlier = groups.get(key);
+      if (earlier && earlier.status === 'ready') Object.assign(earlier, { status: 'conflict', reason });
+      if (earlier && plan.status === 'ready') Object.assign(plan, { status: 'conflict', reason });
+      if (!earlier) groups.set(key, plan);
+    }
+  }
   return plans;
 }
 
 export async function applyReadyArtifacts(artifacts, plans, workspaceRoot) {
   if (!workspaceRoot) throw new Error('workspace root is required for artifact application');
-  const byId = new Map(artifacts.map((artifact) => [artifact.artifact_id, artifact]));
-  const applied = [];
+  const byId = new Map();
+  for (const artifact of artifacts) {
+    if (byId.has(artifact.artifact_id)) throw new Error(`duplicate artifact id: ${artifact.artifact_id}`);
+    byId.set(artifact.artifact_id, artifact);
+  }
+  const ready = [];
+  const targets = new Set();
   for (const plan of plans) {
     if (plan.status !== 'ready') continue;
     const artifact = byId.get(plan.artifact_id);
     if (!artifact || typeof artifact.content !== 'string') throw new Error(`missing content for ${plan.artifact_id}`);
     const verifiedTarget = resolveArtifactPath(workspaceRoot, artifact.path);
+    if (targets.has(verifiedTarget.toLowerCase())) throw new Error(`duplicate artifact target: ${artifact.path}`);
+    targets.add(verifiedTarget.toLowerCase());
     if (verifiedTarget !== plan.target) throw new Error(`artifact plan target changed for ${artifact.path}`);
     if (await assertNoLinkedComponents(workspaceRoot, verifiedTarget) !== plan.workspace_root_real) throw new Error(`artifact workspace changed after planning for ${artifact.path}`);
+    if (artifact.encoding !== undefined && artifact.encoding !== 'utf8') throw new Error(`artifact metadata changed after planning for ${artifact.path}`);
     if (hashContent(artifact.content) !== plan.content_sha256) throw new Error(`artifact content changed after planning for ${artifact.path}`);
     if (hashContent(JSON.stringify(artifact)) !== plan.artifact_sha256) throw new Error(`artifact metadata changed after planning for ${artifact.path}`);
+    if (await existingHash(verifiedTarget) !== plan.current_sha256) throw new Error(`artifact target changed after planning for ${artifact.path}`);
+    ready.push({ plan, artifact });
+  }
+  const applied = [];
+  for (const { plan, artifact } of ready) {
+    const verifiedTarget = resolveArtifactPath(workspaceRoot, artifact.path);
+    if (verifiedTarget !== plan.target) throw new Error(`artifact plan target changed for ${artifact.path}`);
+    if (await assertNoLinkedComponents(workspaceRoot, verifiedTarget) !== plan.workspace_root_real) throw new Error(`artifact workspace changed after planning for ${artifact.path}`);
     const currentSha256 = await existingHash(verifiedTarget);
     if (currentSha256 !== plan.current_sha256) throw new Error(`artifact target changed after planning for ${artifact.path}`);
     await mkdir(dirname(plan.target), { recursive: true });
     const temporary = `${plan.target}.codex-bridge-${process.pid}-${Date.now()}.tmp`;
     try {
-      await writeFile(temporary, artifact.content, { encoding: artifact.encoding ?? 'utf8', flag: 'wx' });
+      await writeFile(temporary, artifact.content, { encoding: 'utf8', flag: 'wx' });
       await rename(temporary, plan.target);
     } catch (error) {
       await rm(temporary, { force: true }).catch(() => {});

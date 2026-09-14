@@ -7,21 +7,28 @@ function sha256(value) {
 export function normalizeChatReference(value) {
   const raw = String(value ?? '').trim();
   if (!raw) throw new Error('chat reference must be non-empty');
+  let url;
   try {
-    const url = new URL(raw);
-    const host = url.hostname.toLowerCase();
-    const chatMatch = url.pathname.match(/^\/c\/([^/?#]+)/);
-    if ((host === 'chatgpt.com' || host.endsWith('.chatgpt.com')) && chatMatch) {
-      return `chatgpt:c:${decodeURIComponent(chatMatch[1])}`;
-    }
-    url.username = '';
-    url.password = '';
-    url.search = '';
-    url.hash = '';
-    return url.toString().replace(/\/$/, '');
+    url = new URL(raw);
   } catch {
+    if (/^[A-Za-z][A-Za-z0-9+.-]*:\/\//.test(raw)) throw new Error('chat reference URL is invalid');
     return raw;
   }
+  const host = url.hostname.toLowerCase();
+  const chatMatch = url.pathname.match(/^\/c\/([^/?#]+)\/?$/);
+  if (host === 'chatgpt.com' || host.endsWith('.chatgpt.com')) {
+    if (url.protocol !== 'https:' || !chatMatch) throw new Error('ChatGPT chat reference must be a secure conversation URL');
+    let chatId;
+    try { chatId = decodeURIComponent(chatMatch[1]); }
+    catch { throw new Error('ChatGPT chat reference contains an invalid identifier'); }
+    if (!/^[A-Za-z0-9_-]+$/.test(chatId)) throw new Error('ChatGPT chat reference contains an invalid identifier');
+    return `chatgpt:c:${chatId}`;
+  }
+  url.username = '';
+  url.password = '';
+  url.search = '';
+  url.hash = '';
+  return url.toString().replace(/\/$/, '');
 }
 
 export function chatReferenceSha256(chatRef) {

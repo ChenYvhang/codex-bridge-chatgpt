@@ -8,8 +8,9 @@ import { estimateTokens } from './token-budget.mjs';
 
 const OPERATIONS = new Set(['read_file', 'search', 'git_diff', 'latest_receipt']);
 const BASE_DENIES = [
-  /^\.git(?:\/|$)/i, /^\.codex(?:\/|$)/i, /^node_modules(?:\/|$)/i,
+  /(?:^|\/)(?:\.git|\.codex|node_modules)(?:\/|$)/i,
   /(?:^|\/)\.env(?:\.|$)/i, /(?:^|\/)(?:credentials|secrets|service-account[^/]*)\.json$/i,
+  /(?:^|\/)(?:credentials|secrets)$/i,
   /(?:^|\/)(?:id_rsa|id_ed25519|id_ecdsa|id_dsa)(?:\.|$)/i,
   /(?:^|\/)\.(?:ssh|aws|gnupg)(?:\/|$)/i,
   /(?:^|\/)(?:\.npmrc|\.netrc|_netrc|\.git-credentials)$/i,
@@ -79,7 +80,8 @@ export class SecureContextReader {
   static async open(root) {
     const canonical = await realpath(resolve(root));
     let patterns = [];
-    try { patterns = (await readFile(join(canonical, '.codexbridgeignore'), 'utf8')).split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith('#')); } catch { /* optional */ }
+    try { patterns = (await readFile(join(canonical, '.codexbridgeignore'), 'utf8')).split(/\r?\n/).map((line) => line.trim()).filter((line) => line && !line.startsWith('#')); }
+    catch (error) { if (error?.code !== 'ENOENT') throw new Error('IGNORE_FILE_UNAVAILABLE'); }
     return new SecureContextReader(canonical, patterns);
   }
 
@@ -87,7 +89,10 @@ export class SecureContextReader {
 
   async path(requested = '.') {
     if (typeof requested !== 'string' || !requested.trim() || requested.includes('\0') || isAbsolute(requested)) throw new Error('INVALID_PATH');
-    const candidate = await realpath(resolve(this.root, requested));
+    const lexical = resolve(this.root, requested);
+    if (!sameOrInside(this.root, lexical)) throw new Error('PATH_OUTSIDE_WORKSPACE');
+    if (this.denied(normalizeRelative(relative(this.root, lexical)) || '.')) throw new Error('ACCESS_DENIED');
+    const candidate = await realpath(lexical);
     if (!sameOrInside(this.root, candidate)) throw new Error('PATH_OUTSIDE_WORKSPACE');
     const rel = normalizeRelative(relative(this.root, candidate)) || '.';
     if (this.denied(rel)) throw new Error('ACCESS_DENIED');
@@ -173,7 +178,11 @@ export async function executeContextQuery({ query, reader, latestReceipt = null,
       if (containsLikelySecret(data)) items.push({ id: request.id, kind: request.kind, status: 'denied', error: 'SENSITIVE_CONTENT' });
       else items.push({ id: request.id, kind: request.kind, status: 'ok', sha256: sha256(JSON.stringify(data)), data });
     } catch (error) {
-      items.push({ id: request.id, kind: request.kind, status: 'denied', error: error.message });
+      const known = new Set(['INVALID_PATH', 'PATH_OUTSIDE_WORKSPACE', 'ACCESS_DENIED', 'NOT_A_FILE', 'FILE_TOO_LARGE', 'BINARY_FILE', 'GIT_DIFF_FAILED']);
+      const code = known.has(error?.message) ? error.message
+        : error?.code === 'ENOENT' ? 'NOT_FOUND'
+          : ['EACCES', 'EPERM'].includes(error?.code) ? 'ACCESS_DENIED' : 'CONTEXT_READ_FAILED';
+      items.push({ id: request.id, kind: request.kind, status: 'denied', error: code });
     }
   }
   const response = { schema_version: 1, bridge_id: query.bridge_id, conversation_scope_id: query.conversation_scope_id, round: query.round, request_id: query.request_id, request_sha256: sha256(JSON.stringify(query)), items, context_manifest: buildResponseContextManifest(items) };
