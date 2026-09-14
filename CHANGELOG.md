@@ -17,6 +17,7 @@
 - Hardened the same 1.0.0 source against nested protected paths, duplicate artifact ids/targets, non-UTF-8 inline artifacts, and partial application caused by a stale later file in the batch.
 - Made mediated context pulls fail closed when ignore rules cannot be read and return fixed error codes instead of local filesystem paths; malformed Chat URLs can no longer fall back to a raw credential-bearing reference.
 - Kept lease acquisition failures from deleting another writer's lock; cleanup now requires ownership of the newly created lock.
+- Upgraded GitHub's checkout and Node setup actions to their Node 24-based releases, pinned them to immutable commits, disabled unused automatic package caching, and added CI coverage for both the Node 18 minimum and Node 24.
 
 ## 0.9.0 - 2026-09-14
 
